@@ -1,0 +1,109 @@
+.input {
+    display: flex;
+    justify-content: flex-start;
+    flex-flow: row wrap;
+}
+
+/* 할 일 입력란 */
+input[type='text'] {
+    height: 33px;
+    width: 70%;
+    border: 0px;
+    border-left: 0px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 5px 5px 0px;
+}
+
+input[value='추가하기'] {
+    background: #fa625d;
+    border: 1px solid #fa625d;
+    border-radius: 20px;
+    margin-left: 10px;
+    width: 95px;
+    height: 35px;
+    box-shadow: rgba(0, 0, 0, 0.1) 2px 5px 5px;
+    color: #FFFFFF;
+    font-size: 19px;
+    font-weight: bold;
+}
+
+input[value='추가하기']:hover,
+input[value='추가하기']:active {
+  background-color: initial;
+  background-position: 0 0;
+  color: #fa625d;
+}
+
+input[value='추가하기']:active {
+    opacity: .5;
+}
+
+.todo {
+    background-color: rgb(252, 228, 198);
+    border-radius: 3px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.todo:hover {
+    background-color: rgb(252, 230, 205);
+    border-radius: 3px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.completed {
+    background-color: rgb(228, 228, 228);
+    border-radius: 3px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.completed:hover {
+    background-color: rgb(228, 230, 232);
+    border-radius: 3px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.todo > h3 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color: rgb(250, 124, 40);
+}
+
+body > div > div {
+    margin-top: 3px;
+    margin-bottom: 3px;;
+}
+
+.completed > h3 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color: rgb(126, 126, 126);
+}
+
+label.task {
+    position: relative;
+    display: inline-block;
+}
+
+div.close {
+    position: absolute;
+    display: inline-block;
+    right: 3%;
+    color: rgb(255, 83, 83);
+    
+    padding-left: 10px;
+    padding-right: 10px
+}
+
+div.close:hover {
+    color: rgb(255, 0, 0);
+    font-weight: bold;
+}
