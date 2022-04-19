@@ -17,7 +17,7 @@ const addToList = function innerFunc() {
       alert("할 일을 입력해주세요.");
       return;
     }
-    console.log(this.variable) // TODO: 왜 this.variable이 undefined?
+
     localStorage.setItem("idNumber", idNum);
     // 체크박스 만들기
     checkbox = document.createElement("input");
