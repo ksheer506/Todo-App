@@ -1,18 +1,56 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Todo 리스트</title>
-        <link rel="stylesheet" href="todo.css"></link>
-    </head>
-    <script src="todo.js"></script>
-    <body>
-        <h2> 할 일 목록</h2>
-        <div class="input">
-            <input type="text" placeholder="할 일을 입력해주세요.">
-            <input type="button" value="추가하기">
-        </div>
-        <br><br>
-        <div class="todo"><h3>진행중</h3></div><br>
-        <div class="completed"><h3>완료</h3></div>
-    </body>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <title>Todo 앱</title>
+  <script src="todo_v3.js" defer></script>
+  <link rel="stylesheet" href="todo.css">
+</head>
+
+<body>
+  <nav>
+    <div>로그인</div>
+    <div>내보내기</div>
+    <div>가져오기</div>
+  </nav>
+  <header>
+    <h2 id="todo-title">할 일 목록</h2>
+    <img src="img/rename.png" alt="할일 목록 제목 수정">
+  </header>
+
+  <div class="input">
+    <input type="text" placeholder="할 일을 입력해주세요.">
+    <input type="date">
+    <input type="button" value="추가하기">
+  </div>
+  <div class="tag-box">
+    <p>태그</p>
+    <input type="text" id="createTag" placeholder="태그 추가">
+    <div class="tag-list">
+      <label class="tags">#태그1<input type="checkbox"></label>
+      <label class="tags">#태그2<input type="checkbox"></label>
+    </div>
+  </div>
+  <br>
+  <article class="todo_list">
+    <section class="ongoing">
+      <input type="checkbox" class="toggle-collapse">
+      <div class="toggle-icon"></div>
+      <header>
+        <h3>진행중</h3>
+
+      </header>
+    </section>
+    <section class="completed">
+      <input type="checkbox" class="toggle-collapse">
+      <div class="toggle-icon"></div>
+      <header>
+        <h3>완료</h3>
+      </header>
+    </section>
+  </article>
+</body>
+
 </html>
