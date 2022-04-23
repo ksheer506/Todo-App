@@ -1,9 +1,10 @@
 /* 할일 목록 배열에 저장(localStorage 이용) */
 let taskArray = [];
 
-/* 할일 배열(taskArray)에서 property와 그 값으로 해당하는 객체를 찾는 함수 */
-function findTaskObject(property, targetValue) {  // func(탐색하고자 하는 property, property 값)
-  return taskArray.find((el) => { return el[property] === targetValue });
+/* 할일 배열(taskArray)에서 taskNode값으로 해당 객체를 찾는 함수 */
+function findTaskObject(eventTarget) {  // func(이벤트가 발생한 target)
+  const targetNode = eventTarget.target.closest(".task");
+  return taskArray.find((el) => { return el.taskNode === targetNode });
 }
 
 function deleteTaskObject(taskObject) {
@@ -16,14 +17,10 @@ class Todo {
     this.isCompleted = _isCompleted;
     this.dueDate = extras[0];
     this.text = extras[1];
+    this.tags = extras[2] || [];
   }
 
   createTaskNode() {
-    if (!this.title) {
-      alert("할 일을 입력해주세요.");
-      return;
-    }
-
     // 체크박스 만들기
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -33,7 +30,7 @@ class Todo {
     taskDiv.appendChild(checkbox);
     taskDiv.appendChild(document.createTextNode(this.title));
     taskDiv.appendChild(document.createElement("br"));
-    taskDiv.classList.add("task");
+    taskDiv.classList.add("task-label");
 
     // 제거 버튼 만들기
     const close = document.createElement("div");
@@ -67,6 +64,7 @@ class Todo {
     div.appendChild(taskDiv);
     div.appendChild(tagDiv);
     div.appendChild(extraDiv);
+    div.className = "task";
 
     this.taskNode = div; // 생성한 노드를 반환
     taskArray.push(this);
@@ -88,14 +86,25 @@ class Todo {
     }
   };
 
-  /* FIXME: 배열에서 삭제할 방법? */
   deleteTask() {
     deleteTaskObject(this);
     this.taskNode.remove();
-
-    exportToLocalStorage();
   };
 
+  /* FIXME: localStorage 불러올 때, 새 태그 추가할 때 동작이 다른데 동일한 매세드 사용? */
+  insertTaskTags(_tags) {
+    const tagDiv = this.taskNode.querySelector(".task-tags");
+
+    _tags.forEach((tag) => {
+      const eachTag = document.createElement("label");
+      eachTag.appendChild(document.createTextNode(tag));
+      eachTag.className = "tags"
+
+      tagDiv.appendChild(eachTag);
+
+      if (!this.tags || !this.tags.includes(tag)) this.tags.push(tag); // 추가할 태그가 해당 할일에 없을 때만 추가
+    })
+  }
 }
 
 /* localStorage에 저장된 내용 불러오는 함수 */
@@ -104,11 +113,12 @@ function loadLocalStorage() {
     arr = JSON.parse(localStorage.getItem("tasks"));
     arr.forEach((obj) => {
       //FIXME: property 추가할 때 일일히 수정해야 하는 문제 있음
-      const { title, isCompleted, dueDate, text } = obj;
-      let parameter = [title, isCompleted, dueDate, text]
+      const { title, isCompleted, dueDate, text, tags } = obj;
+      let parameter = [title, isCompleted, dueDate, text, tags]
       let task = new Todo(...parameter);
 
       task.createTaskNode();
+      if (task.tags) task.insertTaskTags(task.tags);
 
       const destClass = task.isCompleted ? "completed" : "ongoing";
       task.moveTask(destClass);
@@ -116,93 +126,84 @@ function loadLocalStorage() {
   }
 }
 
-/* FIXME: 할일을 통째로 수정하지 말고, 변경 사항 있는 할일만 수정하도록 */
+/* TODO: 통째로 저장하지 말고, 변경 사항 있는 부분만 수정하도록 */
 /* 할일을 localStorage에 저장하는 함수 */
 function exportToLocalStorage() {
   localStorage.setItem("tasks", JSON.stringify(taskArray));
 };
 
-function createTaskTags(targetNode, tags) {
-  const tagDiv = targetNode.querySelector(".task-tags");
+function addNewTask(todoTitle, dueDate) {
+  if (!todoTitle) {
+    alert("할 일을 입력해주세요.");
+    return;
+  }
 
-  tags.forEach((tag) => {
-    const eachTag = document.createElement("label");
-    eachTag.appendChild(document.createTextNode(tag));
-    eachTag.className = "tags"
+  let newTodo = new Todo(todoTitle, 0, dueDate)
 
-    tagDiv.appendChild(eachTag);
-  })
+  newTodo.createTaskNode();
+  newTodo.moveTask();
 }
 
 /* 할일 목록 이벤트 핸들러 함수 */
-function confTodo() {
+(function confTodo() {
   const newTask = document.querySelector("input[type=text]");
-  const dueDate = document.querySelector("input[type=date]");
+  const datePicker = document.querySelector("input[type=date]");
   const addButton = document.querySelector("input[type=button]");
   const taskLists = document.querySelector(".todo_list")
-  const title = document.querySelector("body>header")
-  const tagList = document.querySelector(".tag-list");
+  const title = document.querySelector("main>header")
 
   // 새 할 일 추가(Enter)
   newTask.addEventListener("keyup", (e) => {
-    const enter = 13;
-
-    if (e.keyCode == enter) {
+    if (e.keyCode === 13) {
       let task = e.currentTarget.value;
-      let expireDate = dueDate.value
-      let newTodo = new Todo(task, 0, expireDate)
+      let dueDate = datePicker.value;
 
-      newTodo.createTaskNode();
-      newTodo.moveTask();
+      addNewTask(task, dueDate);
       newTask.value = ""; // 할일 입력란 지우기
     }
   });
 
   // 새 할 일 추가(버튼 클릭)
   addButton.addEventListener("click", () => {
-    /* FIXME: Enter로 추가하는 이벤트 핸들러와 동일한데 함수 만들어서 코드 줄이면? */
     let task = newTask.value;
-    let expireDate = dueDate.value
-    let newTodo = new Todo(task, 0, expireDate)
+    let dueDate = datePicker.value
 
-    newTodo.createTaskNode();
-    newTodo.moveTask();
+    addNewTask(task, dueDate);
     newTask.value = ""; // 할일 입력란 지우기
-
-    exportToLocalStorage();
   });
 
   taskLists.addEventListener("click", (e) => {
-    let currentNode, thisTask;
+    let thisTask;
     // 완료 및 미완료 할일: 진행중, 완료 목록으로 이동
-    console.log(e.target);
-    if (e.target.matches("input[type=checkbox]")) {
-      currentNode = e.target.closest("div:not(.task)");
-      thisTask = findTaskObject("taskNode", currentNode);
+    if (e.target.matches(".task-label input[type=checkbox]")) {
+      thisTask = findTaskObject(e);
 
       const destNodeClass = thisTask.isCompleted ? "ongoing" : "completed";
       thisTask.moveTask(destNodeClass)
     }
 
     // 태그 추가
-    if (e.target.matches(".task")) {  // TODO: 기존 태그 삭제하기, taskArray와 연계
-      let tags = [];
-      const currentTags = taskLists.querySelectorAll("label.tags").forEach((node) => tags.push(node.innerText));
-      console.log(tags); // 기존 태그
-      const insertNewTags = prompt("태그를 추가하세요.(띄어쓰기로 구분)", tags);
-      const tagArray = insertNewTags.match(/#((.*?)(?= )|(.*?)$)/g);
-      currentNode = e.target.closest("div:not(.task)");
-      createTaskTags(currentNode, tagArray);
+    if (e.target.matches("[class*='tags']")) {  // TODO: 기존 태그 삭제하기
+      thisTask = findTaskObject(e);   // A. 각 할일에 tag-list 클론 후 삽입
+
+      const tagList = document.querySelector(".tag-list").cloneNode(true);
+      tagList.className = "cloned-tag-list"
+      thisTask.taskNode.appendChild(tagList);
+
+      // B. tag-list의 tag를 클릭하면 해당 tag를 할일에 저장
+      tagList.addEventListener("click", (e) => {
+        if (e.target.classList.contains("tags")) {
+          console.log(e.target.textContent);
+          thisTask.insertTaskTags([e.target.textContent]);
+        }
+      })
     }
 
     // 할일 삭제
     if (e.target.matches(".close")) {
-      currentNode = e.target.closest("section>div");
-      thisTask = findTaskObject("taskNode", currentNode);
+      thisTask = findTaskObject(e);
       thisTask.deleteTask();
     }
-
-    exportToLocalStorage();
   })
 
   // 만료일 수정
@@ -210,12 +211,9 @@ function confTodo() {
     const nextDue = e.target.value;
     if (nextDue && e.target.matches(".extra>input")) {
       e.target.nextElementSibling.innerText = nextDue;
-      const currentNode = e.target.closest("section>div");
-      const thisTask = findTaskObject("taskNode", currentNode);
+      const thisTask = findTaskObject(e);
       thisTask.dueDate = nextDue;
-      console.log(thisTask);
     }
-    exportToLocalStorage();
   })
 
   // 할일 목록 제목 수정
@@ -226,12 +224,84 @@ function confTodo() {
     }
   })
 
-  // 태그별 필터링
-  tagList.addEventListener("change", (e) => {
-    console.log(tagList.querySelectorAll("input[type=checkbox]:checked"));
+})();
 
+/* 태그 관련 이벤트 핸들러 */
+(function () {
+  const tagList = document.querySelector(".tag-list");
+  const createNewTag = document.querySelector("#createTag");
+
+  /* 1. 태그 목록에 태그 추가 */
+  createNewTag.addEventListener("keyup", (e) => {
+    if (e.keyCode === 13) {  // Enter로 태그 생성
+      const newTags = e.currentTarget.value.match(/[^#\s]\S{0,}[^\s,]/g);
+
+      newTags.forEach((_tag) => {
+        const tag = document.createElement("label");
+        const tagCheckbox = document.createElement("input");
+
+        tag.className = "tags"
+        tagCheckbox.type = "checkbox";
+        tag.appendChild(tagCheckbox)
+        tag.appendChild(document.createTextNode(`#${_tag}`));
+        tagList.appendChild(tag);
+      })
+    }
   })
-}
+
+  /* 2. 태그별 할일 필터링 */
+  tagList.addEventListener("change", (e) => {
+    const allTags = Array.from(tagList.querySelectorAll("label"));
+    const selectedTags = Array.from(tagList.querySelectorAll("input[type=checkbox]:checked")).map(el => el.parentElement.innerText);
+
+    // A. 체크된 태그에 class 추가(진한 배경색으로 변경)
+    allTags.forEach((el) => {
+      if (selectedTags.includes(el.textContent)) {
+        el.classList.add("selected");
+      }
+      else {
+        el.classList.remove("selected");
+      }
+    });
+
+    // B. 할일 필터링
+    taskArray
+      .map((el) => {  // 각각의 할일 객체의 태그 배열이 선택된 태그 배열(selectedTags)을 완전히 포함하는지 확인
+        if (el.tags && selectedTags.length > 0) {
+          return selectedTags.every(nthTag => el.tags.includes(nthTag));
+        }
+        else if (selectedTags.length === 0) { // 태그 선택을 모두 해제한 경우
+          return true;
+        }
+      })
+      .forEach((result, index) => {  // 태그 조건을 불만족하는 경우 "filtered" class 추가
+        if (!result) {
+          taskArray[index].taskNode.classList.add("filtered")
+        }
+        else {
+          taskArray[index].taskNode.classList.remove("filtered")
+        }
+      })
+  })
+})();
+
+/* FIXME:  */
+document.body.addEventListener("click", (e) => { // cloned tag list 창 지우기
+  const clonedTagList = document.querySelectorAll(".cloned-tag-list");
+
+  if (clonedTagList && e.target.classList.value.indexOf("tags") < 0) {
+    clonedTagList.forEach((node) => {
+      node.parentNode.removeChild(node);
+    })
+  }
+})
+
+/* TODO: MutationObserver 이용해 DOM에 변화가 있을 때마다 localStorage에 저장 */
+/* FIXME: 태그 추가, 할일 삭제 시 변경 사항 저장 안 됨 */
+/* 문서 변경될 때마다 localStorage에 저장 */
+document.addEventListener("change", (e) => {
+  console.log("문서 변경됨");
+  exportToLocalStorage();
+})
 
 loadLocalStorage();  // localStorage 내용 있으면 불러오기
-confTodo();  // Todo 앱 화면 구성하기
