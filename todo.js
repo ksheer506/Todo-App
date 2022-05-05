@@ -1,25 +1,14 @@
-/* 할일 목록 배열에 저장(localStorage 이용) */
-let taskArray = [];
-
-/* 할일 배열(taskArray)에서 taskNode값으로 해당 객체를 찾는 함수 */
-function findTaskObject(eventTarget) {  // func(이벤트가 발생한 target)
-  const targetNode = eventTarget.target.closest(".task");
-  return taskArray.find((el) => { return el.taskNode === targetNode });
-}
-
-function deleteTaskObject(taskObject) {
-  taskArray = taskArray.filter((el) => { return el.taskNode !== taskObject.taskNode; });
-}
-
 class Todo {
-  constructor(_title, _isCompleted = 0, ...extras) {
-    this.title = _title;
-    this.isCompleted = _isCompleted;
-    this.dueDate = extras[0];
-    this.text = extras[1];
-    this.tags = extras[2] || [];
+  constructor(object) {
+    this.id = object.id || `id_${Date.now()}`;
+    this.title = object.title;
+    this.isCompleted = object.isCompleted || false;
+    this.dueDate = object.dueDate || "";
+    this.text = object.text || "";
+    this.tags = object.tags || [];
   }
 
+  /* TODO: React 이용 */
   createTaskNode() {
     // 체크박스 만들기
     const checkbox = document.createElement("input");
@@ -29,13 +18,13 @@ class Todo {
     const taskDiv = document.createElement("div");
     taskDiv.appendChild(checkbox);
     taskDiv.appendChild(document.createTextNode(this.title));
-    taskDiv.appendChild(document.createElement("br"));
     taskDiv.classList.add("task-label");
 
     // 제거 버튼 만들기
     const close = document.createElement("div");
     close.appendChild(document.createTextNode("x"));
     close.className = "close";
+    close.setAttribute("tabIndex", "0");
 
     // 태그 만들기
     const tagDiv = document.createElement("div");
@@ -45,17 +34,19 @@ class Todo {
     const extraDiv = document.createElement("div");
 
     // 만료일자가 있을 때 만료일 만들기
+    const dateLabel = document.createElement("label");
     const dateChanger = document.createElement("input");  // 만료일 수정 input element
+    dateLabel.setAttribute("for", "datepicker");
     dateChanger.type = "date";
-    extraDiv.appendChild(dateChanger);
+    dateChanger.id = "datepicker";
+    dateLabel.className = "dueDate";
+    dateLabel.appendChild(dateChanger);
 
-    const date = document.createElement("p");  // 만료일 표시 element
-    date.className = "dueDate";
-    if (this.dueDate) {
-      date.appendChild(document.createTextNode(this.dueDate));
-      dateChanger.value = `${this.dueDate}`;
+    if (this.dueDate) {  // label에 만료일 표시
+      dateLabel.appendChild(document.createTextNode(this.dueDate));
+      dateLabel.value = `${this.dueDate}`;
     }
-    extraDiv.appendChild(date);
+    extraDiv.appendChild(dateLabel);
     extraDiv.appendChild(close);
     extraDiv.className = "extra";
 
@@ -64,197 +55,469 @@ class Todo {
     div.appendChild(taskDiv);
     div.appendChild(tagDiv);
     div.appendChild(extraDiv);
+    div.id = this.id;
     div.className = "task";
 
-    this.taskNode = div; // 생성한 노드를 반환
-    taskArray.push(this);
+    return div;
   }
 
-  moveTask(destNodeClass = "ongoing") { // func(목적지 노드 class명)
-    let taskNode = this.taskNode;
-    const destNode = document.querySelector(`section.${destNodeClass}`)
+  toggleCompletion() {
+    const toggle = this.isCompleted ? false : true;
+    this.isCompleted = toggle;
+    console.log(this.isCompleted);
+  }
 
-    destNode.appendChild(taskNode);
+  addNewTag(tag) {
+    this.tags.push(tag);
+  }
+}
 
-    if (destNodeClass === "ongoing") { // 미완료된 할일일 경우
-      taskNode.querySelector("input").removeAttribute("checked");
-      this.isCompleted = 0;
+/* Task 데이터 저장에 indexedDB 이용 */
+let db;
+const dbRequest = indexedDB.open("user-Todo", 1);
+
+dbRequest.onupgradeneeded = (e) => {
+  db = dbRequest.result;
+
+  // "task" Object Store 생성
+  let taskObjectStore = db.createObjectStore("task", { keyPath: "id" });
+  let tagObjectStore = db.createObjectStore("tagList", { keyPath: "tag" });
+
+  // Index 생성
+  taskObjectStore.createIndex("title", "title", { unique: false });
+  taskObjectStore.createIndex("isCompleted", "isCompleted", { unique: false });
+  taskObjectStore.createIndex("dueDate", "dueDate", { unique: false });
+  taskObjectStore.createIndex("tags", "tags", { unique: false });
+  console.log("indexedDB 초기화: Success");
+}
+
+dbRequest.onsuccess = (e) => {
+  db = dbRequest.result;
+  console.log("indexedDB 로드: Success");
+  loadIndexedDB();
+}
+
+dbRequest.onerror = (e) => { }
+
+/* indexedDB에서 index를 통해 원하는 Task를 찾는 함수 */
+function findTaskDB(indexKey, indexValue) {   // TODO: parameter로 object를 받아 검색할 수 았도록 수정
+  let transaction = db.transaction("task");
+  let taskObjectStore = transaction.objectStore("task");
+  let indexSearchRequest = taskObjectStore.index(indexKey).getAll(indexValue);
+
+  return new Promise((resolve, reject) => {
+    indexSearchRequest.onsuccess = (e) => {
+      console.log("DB 검색 결과: Success");
+      resolve(e.target.result);
     }
-    else if (destNodeClass === "completed") { // 완료된 할일일 경우
-      taskNode.querySelector("input").setAttribute("checked", "1");
-      this.isCompleted = 1;
-    }
-  };
+  })
+}
 
-  deleteTask() {
-    deleteTaskObject(this);
-    this.taskNode.remove();
-  };
+/* 태그 배열을 받아 해당 태그가 indexedDB에 존재하는지 검색하고, 그 결과를 반환하는 함수 */
+function isTagExistInDB(keyArray) {
+  // keyArray = [{"tag": "태그1", "assignedTask": ["id_1", "id_2"]}, ...] 또는 ["태그1", "태그2", ...] 
+  let transaction = db.transaction("tagList");
+  let tagObjectStore = transaction.objectStore("tagList");
+  let searchRequests = [];
+  let resultPromises = [];
 
-  /* FIXME: localStorage 불러올 때, 새 태그 추가할 때 동작이 다른데 동일한 매세드 사용? */
-  insertTaskTags(_tags) {
-    const tagDiv = this.taskNode.querySelector(".task-tags");
+  keyArray.forEach((key, index) => {
+    const tag = key.tag ? key.tag : key;
 
-    _tags.forEach((tag) => {
-      const eachTag = document.createElement("label");
-      eachTag.appendChild(document.createTextNode(tag));
-      eachTag.className = "tags"
-
-      tagDiv.appendChild(eachTag);
-
-      if (!this.tags || !this.tags.includes(tag)) this.tags.push(tag); // 추가할 태그가 해당 할일에 없을 때만 추가
+    searchRequests[index] = tagObjectStore.get(tag);
+    resultPromises[index] = new Promise((resolve, reject) => {
+      searchRequests[index].onsuccess = (e) => {  // 검색 결과가 없을 경우 결과값 undefined로 onsuccess 실행
+        const searchResult = e.target.result || null;
+        console.log("DB 검색 결과: Success");
+        resolve(searchResult);
+      }
     })
+  })
+  return Promise.all(resultPromises);  // DB에 존재: undefined, DB에 없음: 헤당 객체 그대로 반환
+}
+
+/* 해당 Tag를 전부 가지고 있는 Task의 id를 반환하는 함수 */
+async function isTaskHasTag(tagArray) {  // taskArray를 입력받지 않으면 해당 Tag를 가진 모든 Task 배열을 반환
+  if (!Array.isArray(tagArray)) {
+    console.log("입력된 argument가 배열이 아닙니다.");
+    return;
+  }
+  const fetchResult = await isTagExistInDB(tagArray);
+
+  return fetchResult.reduce((accu, next, index) => {
+    if (index === 0) { return next.assignedTask; }
+    if (!next.length) return [];
+    return next.assignedTask.filter(taskId => accu.includes(taskId));
+  }, [])
+}
+
+/* function dbCursor() {
+  let transaction = db.transaction(["task"], "readwrite");
+  let taskObjectStore = transaction.objectStore("task");
+  let taskCursor = taskObjectStore.openCursor();
+
+  taskCursor.onsuccess = (e) => {
+    let cursor = e.target.result;
+    console.log(cursor);
+    cursor.continue();
+  }
+} */
+
+/* "task" IndexedDB 수정 함수 */
+function accessTaskDB(operation, targetTaskObj) {
+  if (typeof (targetTaskObj) !== "object") return;
+
+  let transaction = db.transaction(["task"], "readwrite");
+  let taskObjectStore = transaction.objectStore("task");
+  let operationRequest;
+  let resultLog;
+
+  switch (operation) {
+    case "add":
+      operationRequest = taskObjectStore.add(targetTaskObj);
+      resultLog = "성공적으로 할일을 추가했습니다.";
+      break;
+    case "delete":
+      operationRequest = taskObjectStore.delete(targetTaskObj.id);
+      resultLog = "성공적으로 할일을 제거했습니다.";
+      break;
+    case "modify":
+      operationRequest = taskObjectStore.put(targetTaskObj);
+      resultLog = "성공적으로 할일을 수정했습니다.";
+      break;
+  }
+  operationRequest.onsuccess = () => { console.log(resultLog); }
+}
+
+/* "tagList" IndexedDB 수정 함수 */
+function accessTagDB(operation, array) { // array = [{tag: ""}]
+  if (!Array.isArray(array)) return;
+
+  let transaction = db.transaction(["tagList"], "readwrite");
+  let tagListObjectStore = transaction.objectStore("tagList");
+  let operationRequest = [];
+
+  switch (operation) {
+    case "add":
+      array.forEach((tagObj, index) => {
+        operationRequest[index] = tagListObjectStore.add(tagObj);
+      })
+      resultLog = "성공적으로 태그를 추가했습니다.";
+      break;
+    case "delete":
+      array.forEach((tagObj, index) => {
+        operationRequest[index] = tagListObjectStore.delete(tagObj);
+      })
+      resultLog = "성공적으로 태그를 제거했습니다.";
+      break;
+    case "put":
+      array.forEach((tagObj, index) => {
+        operationRequest[index] = tagListObjectStore.put(tagObj);
+      })
+      resultLog = "성공적으로 태그를 업데이트했습니다.";
+      break;
+  }
+  transaction.onsuccess = () => { console.log(`${resultLog}: "${operationRequest.result}"`); };
+  transaction.onerror = (e) => { e.preventDefault(); };
+}
+
+async function findTaskFromElement(element) {
+  const taskTitle = element.querySelector(".task-label").innerText;
+  let resultTodo = await findTaskDB("title", taskTitle);
+
+  if (resultTodo.length <= 1) return resultTodo[0];
+
+  return new Error("검색 결과가 없거나 여러 개 존재합니다.")  // FIXME: 결과가 2개 이상 나올 때 처리
+  /* const taskDueDate = element.querySelector("p.dueDate").innerText;
+  let taskTags = element.querySelector(".task-label").innerText; // tag로 검색하는 방법?
+  resultTodo = await findTaskDB("dueDate", taskDueDate);
+  console.log(resultTodo); */
+}
+
+/* Task Element(div.task)를 완료 여부에 따라 이동시키는 함수 */
+function moveTaskElement(taskElement, destClassName) {
+  const destElement = document.querySelector(`section.${destClassName}`)
+
+  destElement.appendChild(taskElement);
+
+  if (destClassName === "ongoing") { // 미완료된 할일일 경우
+    taskElement.querySelector("input").removeAttribute("checked");
+  }
+  else if (destClassName === "completed") { // 완료된 할일일 경우
+    taskElement.querySelector("input").setAttribute("checked", "1");
   }
 }
 
-/* localStorage에 저장된 내용 불러오는 함수 */
-function loadLocalStorage() {
-  if (localStorage && localStorage.getItem("tasks")) {
-    arr = JSON.parse(localStorage.getItem("tasks"));
-    arr.forEach((obj) => {
-      //FIXME: property 추가할 때 일일히 수정해야 하는 문제 있음
-      const { title, isCompleted, dueDate, text, tags } = obj;
-      let parameter = [title, isCompleted, dueDate, text, tags]
-      let task = new Todo(...parameter);
-
-      task.createTaskNode();
-      if (task.tags) task.insertTaskTags(task.tags);
-
-      const destClass = task.isCompleted ? "completed" : "ongoing";
-      task.moveTask(destClass);
-    });
-  }
-}
-
-/* TODO: 통째로 저장하지 말고, 변경 사항 있는 부분만 수정하도록 */
-/* 할일을 localStorage에 저장하는 함수 */
-function exportToLocalStorage() {
-  localStorage.setItem("tasks", JSON.stringify(taskArray));
-};
-
-function addNewTask(todoTitle, dueDate) {
+/* 새 Task 생성 함수 */
+function addNewTask(todoTitle, _dueDate) {
   if (!todoTitle) {
     alert("할 일을 입력해주세요.");
     return;
   }
 
-  let newTodo = new Todo(todoTitle, 0, dueDate)
+  const newTaskParam = { title: todoTitle, dueDate: _dueDate };
+  const newTask = new Todo(newTaskParam);
 
-  newTodo.createTaskNode();
-  newTodo.moveTask();
+  const element = newTask.createTaskNode();
+  moveTaskElement(element, "ongoing");
+  accessTaskDB("add", newTask); // DB에 할일 추가
 }
 
-/* 할일 목록 이벤트 핸들러 함수 */
-(function confTodo() {
-  const newTask = document.querySelector("input[type=text]");
-  const datePicker = document.querySelector("input[type=date]");
-  const addButton = document.querySelector("input[type=button]");
-  const taskLists = document.querySelector(".todo_list")
-  const title = document.querySelector("main>header")
+/* 태그 리스트, 각 Task에서 태그를 만드는 함수 */
+async function createTagNode(targetNode, tagArray, ...optionsInput) {
+  let filteredTagArray = tagArray;
+  let options = { makeCheckbox: false, initialLoad: false, ...optionsInput[0] };
 
-  // 새 할 일 추가(Enter)
-  newTask.addEventListener("keyup", (e) => {
+  if (targetNode.className === "tag-list" && !options.initialLoad) {  // 중복된 태그 생성을 막기 위해 indexedDB에 존재하는 태그를 제외한 배열을 만듦
+    const searchResult = await isTagExistInDB(tagArray);
+
+    filteredTagArray = tagArray.reduce((accu, nextObj, index) => {
+      if (!searchResult[index]) { accu.push(nextObj.tag); }
+      return accu;
+    }, []);
+  }
+
+  filteredTagArray.forEach((_tag) => {  // TODO: 태그 리스트에 추가하는 경우, 각 Task에 태그를 추가하는 경우 함수 나누기
+    const newTag = document.createElement("label");
+    newTag.appendChild(document.createTextNode(_tag));
+    newTag.className = "tags";
+
+    if (options.makeCheckbox) {  // 태그별 Task 필터링을 위한 체크박스 생성
+      const tagCheckbox = document.createElement("input");
+      tagCheckbox.type = "checkbox";
+      newTag.appendChild(tagCheckbox);
+    }
+    targetNode.appendChild(newTag);
+  })
+}
+
+function appendTagToTask(targetTask, _tags) {
+  const targetTaskNode = document.querySelector(`#${targetTask.id}`);
+  const tagDiv = targetTaskNode.querySelector(".task-tags");
+  let tagArray = [];
+
+  for (const tag of _tags) {
+    if (targetTask.tags && targetTask.tags.includes(tag)) continue;  // 추가할 태그가 해당 Task에 없을 때만 추가하도록 배열 필터링
+    tagArray.push(tag);
+    targetTask.addNewTag(tag);
+  }
+  createTagNode(tagDiv, tagArray);
+}
+
+/* IndexedDB에 저장된 데이터를 불러오는 함수 */
+function loadIndexedDB() {
+  const transaction = db.transaction(["task", "tagList"]);
+
+  const taskObjectStore = transaction.objectStore("task");  // A. Task 가져오기
+  const taskFetchRequest = taskObjectStore.getAll();
+
+  const tagObjectStore = transaction.objectStore("tagList");  // B. 태그 리스트 목록 가져오기
+  const tagFetchRequest = tagObjectStore.getAll();
+
+  taskFetchRequest.onsuccess = () => {  // C-1. DB 내의 Task를 HTML Element로 나타내기 
+    taskFetchRequest.result.forEach((obj) => {
+      let task = new Todo(obj);
+      const taskNode = task.createTaskNode();
+      const taskTagNode = taskNode.querySelector(".task-tags")
+      const destClass = task.isCompleted ? "completed" : "ongoing";
+
+      moveTaskElement(taskNode, destClass);
+      createTagNode(taskTagNode, task.tags, { initialLoad: true });
+    })
+  }
+
+  tagFetchRequest.onsuccess = () => {  // C-2. DB 내의 tagList를 태그 목록에 나타내기 
+    const tagList = document.querySelector(".tag-list");
+    const options = { makeCheckbox: true, initialLoad: true };
+    const tagArray = tagFetchRequest.result.map((el) => el.tag);
+
+    createTagNode(tagList, tagArray, options);
+  }
+}
+
+const domElements = {
+  "newTask": document.querySelector("#add-task input[type=text]"),
+  "datePicker": document.querySelector("#add-task input[type=date]"),
+  "addButton": document.querySelector("#add-task input[type=button]"),
+  "taskLists": document.querySelector(".todo_list"),
+  "title": document.querySelector("main>header"),
+  "tagList": document.querySelector(".tag-list"),
+  "newTag": document.querySelector("#createTag"),
+  "addTagButton": document.querySelector(".tag-conf #addTag"),
+  "deleteTagButton": document.querySelector(".tag-conf #deleteTag")
+};
+
+/* Task 목록 관련 이벤트 핸들러 */
+(function () {
+  // 1-1. 새 Task 추가(Enter)
+  domElements.newTask.addEventListener("keyup", (e) => {
     if (e.keyCode === 13) {
       let task = e.currentTarget.value;
-      let dueDate = datePicker.value;
+      console.log(taskTag[0]);
+      let dueDate = domElements.datePicker.value;
 
       addNewTask(task, dueDate);
-      newTask.value = ""; // 할일 입력란 지우기
+      domElements.newTask.value = ""; // 할일 입력란 지우기
+      /* accessTaskDB(dbOperation, thisTask); */
     }
   });
 
-  // 새 할 일 추가(버튼 클릭)
-  addButton.addEventListener("click", () => {
-    let task = newTask.value;
-    let dueDate = datePicker.value
+  // 1-2. 새 Task 추가(버튼 클릭)
+  domElements.addButton.addEventListener("click", (e) => {
+    let task = domElements.newTask.value;
+    let dueDate = domElements.datePicker.value
 
     addNewTask(task, dueDate);
-    newTask.value = ""; // 할일 입력란 지우기
+    domElements.newTask.value = ""; // 할일 입력란 지우기
+    /* accessTaskDB(dbOperation, thisTask); */
   });
 
-  taskLists.addEventListener("click", (e) => {
+  domElements.taskLists.addEventListener("click", async (e) => {
+    const thisTaskNode = e.target.closest("div.task");
     let thisTask;
-    // 완료 및 미완료 할일: 진행중, 완료 목록으로 이동
-    if (e.target.matches(".task-label input[type=checkbox]")) {
-      thisTask = findTaskObject(e);
+    let dbOperation;
 
-      const destNodeClass = thisTask.isCompleted ? "ongoing" : "completed";
-      thisTask.moveTask(destNodeClass)
+    // 2. 완료 및 미완료 Task 체크 할 때: 진행중, 완료 목록으로 이동
+    if (e.target.matches(".task-label input[type=checkbox]")) {
+      const thisTaskObj = await findTaskFromElement(thisTaskNode);
+
+      thisTask = new Todo(thisTaskObj);
+      thisTask.toggleCompletion();
+      dbOperation = "modify";
+
+      const destNodeClass = thisTask.isCompleted ? "completed" : "ongoing";
+      moveTaskElement(thisTaskNode, destNodeClass);
+      accessTaskDB(dbOperation, thisTask);
     }
 
-    // 태그 추가
-    if (e.target.matches("[class*='tags']")) {  // TODO: 기존 태그 삭제하기
-      thisTask = findTaskObject(e);   // A. 각 할일에 tag-list 클론 후 삽입
+    // 3. 각 Task에 태그 추가
+    if (e.target.matches(".task-tags")) {  // TODO: 기존 태그 삭제하기
+      const thisTaskObj = await findTaskFromElement(thisTaskNode);
+      dbOperation = "modify";
+      thisTask = new Todo(thisTaskObj);
 
-      const tagList = document.querySelector(".tag-list").cloneNode(true);
+      const tagList = document.querySelector(".tag-list").cloneNode(true); // 각 Task에 tag-list 클론 후 삽입
       tagList.className = "cloned-tag-list"
-      thisTask.taskNode.appendChild(tagList);
+      thisTaskNode.appendChild(tagList);
 
-      // B. tag-list의 tag를 클릭하면 해당 tag를 할일에 저장
-      tagList.addEventListener("click", (e) => {
-        if (e.target.classList.contains("tags")) {
-          console.log(e.target.textContent);
-          thisTask.insertTaskTags([e.target.textContent]);
+      // tag-list의 태그를 클릭하면 해당 태그를 Task에 추가
+      tagList.addEventListener("click", async (e) => {
+        if (e.target.matches(".tags input")) {
+          const taskNodeId = e.target.closest("div.task").id;
+          const taskTag = [e.target.parentElement.textContent];
+
+          let fetchResult = await isTaskHasTag(taskTag) || [];
+          let taskIncluded = fetchResult.includes(taskNodeId);
+
+          if (!taskIncluded) {
+            appendTagToTask(thisTask, taskTag);
+            fetchResult.push(taskNodeId); // Tag ObjectStore에 Task Id 넣어 갱신
+
+            const injectTagKey = [{ "tag": taskTag[0], "assignedTask": fetchResult }];
+            accessTagDB("put", injectTagKey);
+          }
+          accessTaskDB(dbOperation, thisTask);
         }
       })
     }
 
-    // 할일 삭제
+    // 4. Task 삭제
     if (e.target.matches(".close")) {
-      thisTask = findTaskObject(e);
-      thisTask.deleteTask();
+      const thisTaskObj = await findTaskFromElement(thisTaskNode);
+
+      thisTask = new Todo(thisTaskObj);
+      dbOperation = "delete";
+      thisTaskNode.remove();
+      accessTaskDB(dbOperation, thisTask);
     }
   })
 
-  // 만료일 수정
-  taskLists.addEventListener("change", (e) => {
+  // 5. 만료일 수정
+  domElements.taskLists.addEventListener("change", async (e) => {
+    const thisTaskNode = e.target.closest("div.task");
+    const thisDateLabel = thisTaskNode?.querySelector("label.dueDate");
     const nextDue = e.target.value;
-    if (nextDue && e.target.matches(".extra>input")) {
-      e.target.nextElementSibling.innerText = nextDue;
-      const thisTask = findTaskObject(e);
+    let thisTask;
+
+    if (nextDue && e.target.matches(".extra input")) {
+      const thisTaskObj = await findTaskFromElement(thisTaskNode);
+
+      thisTask = new Todo(thisTaskObj);
+      dbOperation = "modify";
+
+      thisDateLabel.textContent = nextDue; // 각 Task 목록에 만료일 표시 
       thisTask.dueDate = nextDue;
+
+      accessTaskDB(dbOperation, thisTask);
     }
   })
-
-  // 할일 목록 제목 수정
-  title.addEventListener("click", (e) => {
-    if (e.target.matches(":is(img, h2")) {
-      const newTitle = prompt("할일 목록의 제목을 수정하세요.");
-      e.currentTarget.querySelector("h2").innerText = newTitle || "할 일 목록";
-    }
-  })
-
 })();
+
+// 6. Task 목록 제목 수정
+domElements.title.addEventListener("click", (e) => {
+  if (e.target.matches(":is(div, h2")) {
+    const newTitle = prompt("Task 목록의 제목을 수정하세요.");
+    e.currentTarget.querySelector("h2").innerText = newTitle || "할 일 목록";
+  }
+}) 
+
+function createTagKeyArr(tagArray) {
+  return tagArray.map((tag) => ({ "tag": `#${tag}`, "assignedTask": [] }));
+}
 
 /* 태그 관련 이벤트 핸들러 */
 (function () {
-  const tagList = document.querySelector(".tag-list");
-  const createNewTag = document.querySelector("#createTag");
+  // 1-1. 태그 목록에 새 태그 추가(Enter)
+  domElements.newTag.addEventListener("keyup", (e) => {
+    if (e.keyCode === 13) {
+      if (domElements.newTag.value.length <= 1) {
+        alert("태그는 두 글자 이상을 입력해주세요.")
+        domElements.newTag.value = "";
+        return;
+      }
 
-  /* 1. 태그 목록에 태그 추가 */
-  createNewTag.addEventListener("keyup", (e) => {
-    if (e.keyCode === 13) {  // Enter로 태그 생성
-      const newTags = e.currentTarget.value.match(/[^#\s]\S{0,}[^\s,]/g);
+      const newTags = domElements.newTag.value.match(/[^#\s]\S{0,}[^\s,]/g);
+      const createOption = { makeCheckbox: true };
+      const tagArray = createTagKeyArr(newTags);
 
-      newTags.forEach((_tag) => {
-        const tag = document.createElement("label");
-        const tagCheckbox = document.createElement("input");
-
-        tag.className = "tags"
-        tagCheckbox.type = "checkbox";
-        tag.appendChild(tagCheckbox)
-        tag.appendChild(document.createTextNode(`#${_tag}`));
-        tagList.appendChild(tag);
-      })
+      createTagNode(domElements.tagList, tagArray, createOption);
+      accessTagDB("add", tagArray);
+      domElements.newTag.value = "";
     }
   })
 
-  /* 2. 태그별 할일 필터링 */
-  tagList.addEventListener("change", (e) => {
-    const allTags = Array.from(tagList.querySelectorAll("label"));
-    const selectedTags = Array.from(tagList.querySelectorAll("input[type=checkbox]:checked")).map(el => el.parentElement.innerText);
+  // 1-2. 태그 목록에 새 태그 추가(버튼 클릭)
+  domElements.addTagButton.addEventListener("click", (e) => {
+    if (domElements.newTag.value.length <= 1) {
+      alert("태그는 두 글자 이상을 입력해주세요.")
+      domElements.newTag.value = "";
+      return;
+    }
 
-    // A. 체크된 태그에 class 추가(진한 배경색으로 변경)
+    const newTags = domElements.newTag.value.match(/[^#\s]\S{0,}[^\s,]/g);
+    const createOption = { makeCheckbox: true };
+    const tagArray = createTagKeyArr(newTags);
+
+    createTagNode(domElements.tagList, tagArray, createOption);
+    accessTagDB("add", tagArray);
+    domElements.newTag.value = "";
+  })
+
+  // 2. 태그 목록에서 태그 삭제 
+  domElements.deleteTagButton.addEventListener("click", (e) => {
+    domElements.tagList.classList.add("deleteAnimation");
+  });
+
+  /* FIXME: 체크된 상태에서 새로고침 할 경우 체크되었는지 표시가 안 나고, 필터링도 안 되어 있음 */
+  /* 3. 태그별 Task 필터링 */
+  domElements.tagList.addEventListener("change", async (e) => {
+    const allTasks = document.querySelectorAll(".task");
+    const allTags = Array.from(domElements.tagList.querySelectorAll("label"));
+    const selectedTags = Array
+      .from(domElements.tagList.querySelectorAll("input[type=checkbox]:checked"))
+      .map(el => el.parentElement.innerText);
+
+    // A. 체크된 태그 진한 배경색으로 변경 (class: "selected")
     allTags.forEach((el) => {
       if (selectedTags.includes(el.textContent)) {
         el.classList.add("selected");
@@ -264,29 +527,31 @@ function addNewTask(todoTitle, dueDate) {
       }
     });
 
-    // B. 할일 필터링
-    taskArray
-      .map((el) => {  // 각각의 할일 객체의 태그 배열이 선택된 태그 배열(selectedTags)을 완전히 포함하는지 확인
-        if (el.tags && selectedTags.length > 0) {
-          return selectedTags.every(nthTag => el.tags.includes(nthTag));
-        }
-        else if (selectedTags.length === 0) { // 태그 선택을 모두 해제한 경우
-          return true;
-        }
-      })
-      .forEach((result, index) => {  // 태그 조건을 불만족하는 경우 "filtered" class 추가
-        if (!result) {
-          taskArray[index].taskNode.classList.add("filtered")
-        }
-        else {
-          taskArray[index].taskNode.classList.remove("filtered")
-        }
-      })
+    const filteredId = await isTaskHasTag(selectedTags);
+
+    // B. Task 필터링 (class: "filtered")
+    allTasks.forEach((task) => {
+      if (!filteredId.includes(task.id) && selectedTags.length) {
+        task.classList.add("filtered");
+      }
+      else {
+        task.classList.remove("filtered");
+      }
+    })
   })
 })();
 
+/* 문서 변경될 때마다 localStorage에 저장 */
+/* (function () {
+  const observeTarget = document.querySelector("main");
+  let mainObserver = new MutationObserver(exportToLocalStorage);
+  const config = { attributes: true, childList: true, characterData: true, subtree: true };
+
+  mainObserver.observe(observeTarget, config);
+})(); */
+
 /* FIXME:  */
-document.body.addEventListener("click", (e) => { // cloned tag list 창 지우기
+document.addEventListener("click", (e) => { // cloned tag list 창 지우기
   const clonedTagList = document.querySelectorAll(".cloned-tag-list");
 
   if (clonedTagList && e.target.classList.value.indexOf("tags") < 0) {
@@ -295,13 +560,3 @@ document.body.addEventListener("click", (e) => { // cloned tag list 창 지우�
     })
   }
 })
-
-/* TODO: MutationObserver 이용해 DOM에 변화가 있을 때마다 localStorage에 저장 */
-/* FIXME: 태그 추가, 할일 삭제 시 변경 사항 저장 안 됨 */
-/* 문서 변경될 때마다 localStorage에 저장 */
-document.addEventListener("change", (e) => {
-  console.log("문서 변경됨");
-  exportToLocalStorage();
-})
-
-loadLocalStorage();  // localStorage 내용 있으면 불러오기
