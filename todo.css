@@ -28,16 +28,6 @@
   --shadow: rgba(0, 0, 0, 0.1) 2px 4px 3px;
 }
 
-@media (max-width: 675px) {
-  main {
-    grid-column: 1/4;
-  }
-
-  aside {
-    opacity: 0;
-  }
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --color-body: rgb(49, 49, 49);
@@ -691,4 +681,14 @@ header > h2 {
 .close:hover {
   color: rgb(255, 0, 0);
   font-weight: bold;
+}
+
+@media (max-width: 675px) {
+  main {
+    grid-column: 1/4;
+  }
+
+  aside {
+    opacity: 0;
+  }
 }
