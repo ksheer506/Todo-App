@@ -388,7 +388,7 @@ function loadLocalStorage() {
   if (userTitle) {  // Title 변경
     todoTitle.textContent = userTitle
   };
-  if (darkMode) {  // 기존 다크모드 적용
+  if (darkMode === "true") {  // 유저 다크모드 적용
     darkModeToggler.setAttribute("checked", true);
     darkModeSetter(true);
   };
