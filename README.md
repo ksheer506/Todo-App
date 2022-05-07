@@ -4,6 +4,10 @@ Javascript를 이용한 Todo-App입니다.
 [Todo App](https://htmlpreview.github.io/?https://github.com/ksheer506/Todo-App/blob/main/todo.html)
   
 
+## v.3.1 (2022. 5. 7.)
+1. 유저 선택 다크 모드
+2. 사이드 패널 표시 기능 (할일 제목 클릭 시)
+
 ## v.3 (2022. 5. 5.)
 1. 태그 추가 및 태그별 할일 필터링
 4. 다크 모드 지원(Firefox 99.0 테스트 완료)
