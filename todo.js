@@ -99,14 +99,21 @@ dbRequest.onsuccess = (e) => {
 
 dbRequest.onerror = (e) => { }
 
-/* indexedDB에서 index를 통해 원하는 Task를 찾는 함수 */
-function findTaskDB(indexKey, indexValue) {   // TODO: parameter로 object를 받아 검색할 수 았도록 수정
+/* indexedDB에서 primary key 또는 index를 통해 원하는 Task를 찾는 함수 */
+function findTaskDB(key, value) {   // TODO: parameter로 object를 받아 검색할 수 았도록 수정
   let transaction = db.transaction("task");
   let taskObjectStore = transaction.objectStore("task");
-  let indexSearchRequest = taskObjectStore.index(indexKey).getAll(indexValue);
+  let searchRequest
+
+  if (key === "id") {
+    searchRequest = taskObjectStore.get(value);
+  }
+  else {
+    searchRequest = taskObjectStore.index(key).getAll(value);
+  }
 
   return new Promise((resolve, reject) => {
-    indexSearchRequest.onsuccess = (e) => {
+    searchRequest.onsuccess = (e) => {
       console.log("DB 검색 결과: Success");
       resolve(e.target.result);
     }
@@ -190,7 +197,7 @@ function accessTaskDB(operation, targetTaskObj) {
 }
 
 /* "tagList" IndexedDB 수정 함수 */
-function accessTagDB(operation, array) { // array = [{tag: ""}]
+function accessTagDB(operation, array) { // array = [ {tag: "", assignedTask : []}, ... ]
   if (!Array.isArray(array)) return;
 
   let transaction = db.transaction(["tagList"], "readwrite");
@@ -206,7 +213,7 @@ function accessTagDB(operation, array) { // array = [{tag: ""}]
       break;
     case "delete":
       array.forEach((tagObj, index) => {
-        operationRequest[index] = tagListObjectStore.delete(tagObj);
+        operationRequest[index] = tagListObjectStore.delete(tagObj.tag);
       })
       resultLog = "성공적으로 태그를 제거했습니다.";
       break;
@@ -221,8 +228,15 @@ function accessTagDB(operation, array) { // array = [{tag: ""}]
   transaction.onerror = (e) => { e.preventDefault(); };
 }
 
+/* 함수 accessTagDB()의 argument인 key-value 객체 배열을 만드는 함수 */
+function createTagKeyArr(tagArray) {
+  return tagArray.map((tag) => ({ "tag": `#${tag}`, "assignedTask": [] }));
+}
+
 async function findTaskFromElement(element) {
-  const taskTitle = element.querySelector(".task-label").innerText;
+  let taskTitle;
+  if (element.classList.match("task-label"))
+    taskTitle = element.querySelector(".task-label").innerText;
   let resultTodo = await findTaskDB("title", taskTitle);
 
   if (resultTodo.length <= 1) return resultTodo[0];
@@ -234,6 +248,10 @@ async function findTaskFromElement(element) {
   console.log(resultTodo); */
 }
 
+/* async function fetchDBFromTaskId(id) {
+  return await findTaskDB("id", id);
+}
+ */
 /* Task Element(div.task)를 완료 여부에 따라 이동시키는 함수 */
 function moveTaskElement(taskElement, destClassName) {
   const destElement = document.querySelector(`section.${destClassName}`)
@@ -263,10 +281,10 @@ function addNewTask(todoTitle, _dueDate) {
   accessTaskDB("add", newTask); // DB에 할일 추가
 }
 
-/* 태그 리스트, 각 Task에서 태그를 만드는 함수 */
-async function createTagNode(targetNode, tagArray, ...optionsInput) {
+/* 지정 위치에 Tag Node를 만드는 함수 */
+async function createTagNode(targetNode, tagArray, ...userOptions) {
   let filteredTagArray = tagArray;
-  let options = { makeCheckbox: false, initialLoad: false, ...optionsInput[0] };
+  let options = { makeCheckbox: false, initialLoad: false, ...userOptions[0] };
 
   if (targetNode.className === "tag-list" && !options.initialLoad) {  // 중복된 태그 생성을 막기 위해 indexedDB에 존재하는 태그를 제외한 배열을 만듦
     const searchResult = await isTagExistInDB(tagArray);
@@ -289,6 +307,31 @@ async function createTagNode(targetNode, tagArray, ...optionsInput) {
     }
     targetNode.appendChild(newTag);
   })
+}
+
+/* 해당 위치의 Tag Node를 삭제하는 함수(DB에서도 삭제) */
+// tagArray = ["태그1", "태그2", ...], 모든 태그를 삭제할 경우 []로 지정
+async function deleteTagNode(targetNode, tagArray, ...userOptions) {
+  const allTagNodes = targetNode.querySelectorAll(".tags");
+  let targetTags = tagArray;
+  let options = { clearDB: true, ...userOptions[0] };
+  let tagKeyValue = [];
+
+  console.log(allTagNodes);
+
+  if (!tagArray.length) {  // tagArray = []일 때
+    targetTags = Array.from(allTagNodes).map((tagNode) => tagNode.textContent);
+  }
+
+  allTagNodes.forEach((tagNode) => {
+    if (targetTags.includes(tagNode.textContent)) {
+      const tagObj = { "tag": tagNode.textContent };
+
+      tagKeyValue.push(tagObj);
+      tagNode.remove();
+    }
+  })
+  if (options.clearDB) accessTagDB("delete", tagKeyValue);
 }
 
 function appendTagToTask(targetTask, _tags) {
@@ -335,6 +378,22 @@ function loadIndexedDB() {
   }
 }
 
+function loadLocalStorage() {
+  const userTitle = localStorage.getItem("title");
+  const darkMode = localStorage.getItem("dark-mode");
+
+  const todoTitle = document.querySelector("header > h2");
+  const darkModeToggler = document.querySelector("#default");
+
+  if (userTitle) {  // Title 변경
+    todoTitle.textContent = userTitle
+  };
+  if (darkMode) {  // 기존 다크모드 적용
+    darkModeToggler.setAttribute("checked", true);
+    darkModeSetter(true);
+  };
+}
+
 const domElements = {
   "newTask": document.querySelector("#add-task input[type=text]"),
   "datePicker": document.querySelector("#add-task input[type=date]"),
@@ -344,7 +403,12 @@ const domElements = {
   "tagList": document.querySelector(".tag-list"),
   "newTag": document.querySelector("#createTag"),
   "addTagButton": document.querySelector(".tag-conf #addTag"),
-  "deleteTagButton": document.querySelector(".tag-conf #deleteTag")
+  "deleteTagButton": document.querySelector(".tag-conf #deleteTag"),
+  "sidePanel": document.querySelector("aside"),
+  "sideTitle": document.querySelector("aside h2"),
+  "sideDueDate": document.querySelector("aside .dueDate"),
+  "sideTags": document.querySelector("aside .tag-list"),
+  "toggleDark": document.querySelector("#default")
 };
 
 /* Task 목록 관련 이벤트 핸들러 */
@@ -430,9 +494,32 @@ const domElements = {
       thisTaskNode.remove();
       accessTaskDB(dbOperation, thisTask);
     }
+
+    // 5. Task 세부 내용 사이드 화면에서 보기
+    if (e.target.matches(".task-label")) {
+      const id = e.target.closest(".task").id;
+      configureSidePanel(id);
+    }
   })
 
-  // 5. 만료일 수정
+  /* 해당 Task를 사이드 패널에 표시해주는 함수 */
+  // taskId = 해당 Task Node의 id
+  async function configureSidePanel(taskId) {
+    const thisTaskData = await findTaskDB("id", taskId);
+    const tagClearOption = { clearDB: false };
+    const tagOptions = { makeCheckbox: false, initialLoad: true };
+
+    domElements.sideTitle.textContent = thisTaskData.title;
+    domElements.sideDueDate.textContent = thisTaskData.dueDate;
+
+    if (domElements.sideTags.textContent) {
+      deleteTagNode(domElements.sideTags, [], tagClearOption);
+    };
+
+    createTagNode(domElements.sideTags, thisTaskData.tags, tagOptions);
+  }
+
+  // 6. 만료일 수정
   domElements.taskLists.addEventListener("change", async (e) => {
     const thisTaskNode = e.target.closest("div.task");
     const thisDateLabel = thisTaskNode?.querySelector("label.dueDate");
@@ -453,17 +540,6 @@ const domElements = {
   })
 })();
 
-// 6. Task 목록 제목 수정
-domElements.title.addEventListener("click", (e) => {
-  if (e.target.matches(":is(div, h2")) {
-    const newTitle = prompt("Task 목록의 제목을 수정하세요.");
-    e.currentTarget.querySelector("h2").innerText = newTitle || "할 일 목록";
-  }
-}) 
-
-function createTagKeyArr(tagArray) {
-  return tagArray.map((tag) => ({ "tag": `#${tag}`, "assignedTask": [] }));
-}
 
 /* 태그 관련 이벤트 핸들러 */
 (function () {
@@ -541,6 +617,15 @@ function createTagKeyArr(tagArray) {
   })
 })();
 
+// 7. Task 목록 제목 수정
+domElements.title.addEventListener("click", (e) => {
+  if (e.target.matches(":is(div, h2")) {
+    const newTitle = prompt("Task 목록의 제목을 수정하세요.");
+    e.currentTarget.querySelector("h2").innerText = newTitle || "할 일 목록";
+    localStorage.setItem("title", newTitle);
+  }
+})
+
 /* 문서 변경될 때마다 localStorage에 저장 */
 /* (function () {
   const observeTarget = document.querySelector("main");
@@ -560,3 +645,13 @@ document.addEventListener("click", (e) => { // cloned tag list 창 지우기
     })
   }
 })
+
+loadLocalStorage();
+
+domElements.toggleDark.addEventListener("change", (e) => { darkModeSetter(e.target.checked)})
+
+/* 다크모드 토글 함수 */
+function darkModeSetter(checked = false) {
+  document.documentElement.setAttribute("dark-theme", checked);
+  localStorage.setItem("dark-mode", checked);
+}

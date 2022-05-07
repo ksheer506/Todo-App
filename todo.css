@@ -28,10 +28,83 @@
   --shadow: rgba(0, 0, 0, 0.1) 2px 4px 3px;
 }
 
+@media (max-width: 675px) {
+  main {
+    grid-column: 1/4;
+  }
+
+  aside {
+    opacity: 0;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-body: rgb(49, 49, 49);
+    --color-text: rgb(255, 255, 255);
+
+    --color-nav-text: rgb(216, 216, 216);
+    --color-nav-bg: rgb(124, 124, 124);
+    --color-nav-hover: rgb(145, 145, 145);
+
+    --img-edit-title: url("img/rename_light.png");
+    --color-input-bg: rgb(94, 94, 114);
+
+    --color-ongoing-title: rgb(184, 79, 9);
+    --color-ongoing-bg: rgb(202, 180, 153);
+    --color-ongoing-hover: rgb(216, 195, 169);
+    --color-completed-title: rgb(31, 31, 31);
+    --color-completed-bg: rgb(122, 122, 122);
+    --color-completed-hover: rgb(145, 145, 145);
+    --color-completed-text: rgb(196, 196, 196);
+
+    --color-add-button: rgb(179, 97, 94);
+    --color-add-button-hover: rgb(184, 78, 74);
+    --color-tag-button: rgb(84, 117, 189);
+    --color-button-bg: rgb(255, 255, 255);
+    --color-button-text: rgb(29, 29, 29);
+
+    --color-tag-bg: rgb(62, 139, 172);
+
+    --shadow: rgba(83, 83, 83, 0.486) 2px 3px 2px 1px;
+  }
+}
+
+/* 사용자가 강제 다크모드 활성화 시 */
+[dark-theme="true"] {
+    --color-body: rgb(49, 49, 49);
+    --color-text: rgb(255, 255, 255);
+
+    --color-nav-text: rgb(216, 216, 216);
+    --color-nav-bg: rgb(124, 124, 124);
+    --color-nav-hover: rgb(145, 145, 145);
+
+    --img-edit-title: url("img/rename_light.png");
+    --color-input-bg: rgb(94, 94, 114);
+
+    --color-ongoing-title: rgb(184, 79, 9);
+    --color-ongoing-bg: rgb(202, 180, 153);
+    --color-ongoing-hover: rgb(216, 195, 169);
+    --color-completed-title: rgb(31, 31, 31);
+    --color-completed-bg: rgb(122, 122, 122);
+    --color-completed-hover: rgb(145, 145, 145);
+    --color-completed-text: rgb(196, 196, 196);
+
+    --color-add-button: rgb(179, 97, 94);
+    --color-add-button-hover: rgb(184, 78, 74);
+    --color-tag-button: rgb(84, 117, 189);
+    --color-button-bg: rgb(255, 255, 255);
+    --color-button-text: rgb(29, 29, 29);
+
+    --color-tag-bg: rgb(62, 139, 172);
+
+    --shadow: rgba(83, 83, 83, 0.486) 2px 3px 2px 1px;
+}
+
 * {
   box-sizing: border-box;
   color: var(--color-text);
-  transition: 0.5s all;
+  transition: 0.6s color, 0.6s background-color, 0.6s box-shadow, 0.6s height;
 }
 
 body {
@@ -96,19 +169,23 @@ aside {
   position: relative;
   flex-flow: column;
   height: min(100vh, 450px);
-  background-color: rgb(241, 236, 228);
-  padding: 5px;
-  box-shadow: rgba(100, 100, 111, 0.2) 2px 2px 2px 0px;
+  background-color: var(--color-nav-bg);
+  padding: 5px 5px 0px 5px;
+  box-shadow: var(--shadow);
   right: 0%;
 }
 
 aside h2 {
   display: inline-block;
+  flex: 1 0 30px;
   margin-top: 15px;
   margin-bottom: 5px;
+  /* min-width: 30px; */
 }
 
 aside > .dueDate {
+  /* height: 35px; */
+  flex: 1 0 35px;
   font-size: 0.7rem;
   text-align: right;
   padding-top: 5px;
@@ -121,6 +198,10 @@ aside > .text {
 }
 
 aside > .tag-list {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  flex: 1 0 40px;
   font-size: 0.7rem;
   margin-top: auto;
   padding-top: 10px;
@@ -143,7 +224,7 @@ header > h2 {
   cursor: pointer;
 }
 
-header div {
+#edit-title {
   display: inline-block;
   cursor: pointer;
   width: 20px;
@@ -151,7 +232,7 @@ header div {
   background: 0% 0%/100% var(--img-edit-title);
 }
 
-header div:hover {
+#edit-title:hover {
   animation: editing 0.2s ease 0s 2;
 }
 
@@ -165,6 +246,64 @@ header div:hover {
   100% {
     transform: rotate(10deg);
   }
+}
+
+/* 다크모드 Toggle 버튼 */
+.toggle-dark {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  column-gap: 5px;
+  margin-left: auto;
+}
+
+.toggle-dark > p {
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.toggle-dark > .switch {
+  display: block;
+  cursor: pointer;
+  position: relative;
+  width: 40px;
+  height: 10px;
+  border: 1px solid rgb(219, 219, 219);
+  border-radius: 40px;
+  background-color: rgb(219, 219, 219);
+  transition: 0.6s all;
+}
+
+.toggle-dark > .switch::before {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  content: "";
+  height: 15px;
+  width: 15px;
+  transform: translate(0%, -50%);
+  border-radius: 20px;
+  background-color: white;
+  transition: 0.6s all;
+  box-shadow: 0px 1px 3px grey;
+}
+
+#default {
+  visibility: hidden;
+  position: absolute;
+}
+
+#default:checked + .switch::before {
+  left: 100%;
+  transform: translate(-100%, -50%);
+  transition: 0.6s all;
+}
+
+#default:checked + .switch {
+  background-color: rgba(88, 88, 88, 0.815);
+  transition: 0.6s all;
 }
 
 /* 할 일 입력란 + 일자 선택 + 추가하기 버튼 */
@@ -360,7 +499,7 @@ header div:hover {
 .task-label {
   display: flex;
   flex: 1 1 auto;
-  height: 80%;
+  height: 90%;
   cursor: pointer;
   align-items: center;
   white-space: nowrap;
@@ -396,6 +535,7 @@ header div:hover {
   right: 8px;
   top: 12px;
   transform-origin: center;
+  transition: 0.6s all;
 }
 .toggle-icon::before {
   display: block;
@@ -433,6 +573,7 @@ header div:hover {
 .toggle-collapse:checked + .toggle-icon {
   transform-origin: center;
   transform: rotate(-90deg);
+  transition: 0.6s all;
 }
 
 .toggle-collapse:checked ~ div.task {
@@ -440,7 +581,6 @@ header div:hover {
 }
 
 /* ----------------------------------------------------- */
-
 /* 진행중 section */
 .ongoing {
   background-color: var(--color-ongoing-bg);
@@ -490,12 +630,12 @@ header div:hover {
 }
 
 .task-tags {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   display: flex;
   justify-content: flex-end;
   cursor: pointer;
   height: 100%;
-  max-width: 150px;
+  /* max-width: 150px; */
   column-gap: 3px;
   align-items: center;
   margin-left: auto;
@@ -551,46 +691,4 @@ header div:hover {
 .close:hover {
   color: rgb(255, 0, 0);
   font-weight: bold;
-}
-
-@media (max-width: 675px) {
-  main {
-    grid-column: 1/4;
-  }
-
-  aside {
-    opacity: 0;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-body: rgb(49, 49, 49);
-    --color-text: rgb(255, 255, 255);
-
-    --color-nav-text: rgb(216, 216, 216);
-    --color-nav-bg: rgb(124, 124, 124);
-    --color-nav-hover: rgb(145, 145, 145);
-
-    --img-edit-title: url("img/rename_light.png");
-    --color-input-bg: rgb(94, 94, 114);
-
-    --color-ongoing-title: rgb(184, 79, 9);
-    --color-ongoing-bg: rgb(202, 180, 153);
-    --color-ongoing-hover: rgb(216, 195, 169);
-    --color-completed-title: rgb(31, 31, 31);
-    --color-completed-bg: rgb(122, 122, 122);
-    --color-completed-hover: rgb(145, 145, 145);
-    --color-completed-text: rgb(196, 196, 196);
-
-    --color-add-button: rgb(179, 97, 94);
-    --color-add-button-hover: rgb(184, 78, 74);
-    --color-tag-button: rgb(84, 117, 189);
-    --color-button-bg: rgb(255, 255, 255);
-    --color-button-text: rgb(29, 29, 29);
-
-    --color-tag-bg: rgb(62, 139, 172);
-
-    --shadow: rgba(83, 83, 83, 0.486) 2px 3px 2px 1px;
-  }
 }
