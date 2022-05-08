@@ -18,7 +18,7 @@ class Todo {
     const taskDiv = document.createElement("div");
     taskDiv.appendChild(checkbox);
     taskDiv.appendChild(document.createTextNode(this.title));
-    taskDiv.classList.add("task-label");
+    taskDiv.className = "task-label";
 
     // 제거 버튼 만들기
     const close = document.createElement("div");
@@ -44,7 +44,7 @@ class Todo {
 
     if (this.dueDate) {  // label에 만료일 표시
       dateLabel.appendChild(document.createTextNode(this.dueDate));
-      dateLabel.value = `${this.dueDate}`;
+      /* dateLabel.value = `${this.dueDate}`; */
     }
     extraDiv.appendChild(dateLabel);
     extraDiv.appendChild(close);
@@ -233,25 +233,6 @@ function createTagKeyArr(tagArray) {
   return tagArray.map((tag) => ({ "tag": `#${tag}`, "assignedTask": [] }));
 }
 
-async function findTaskFromElement(element) {
-  let taskTitle;
-  if (element.classList.match("task-label"))
-    taskTitle = element.querySelector(".task-label").innerText;
-  let resultTodo = await findTaskDB("title", taskTitle);
-
-  if (resultTodo.length <= 1) return resultTodo[0];
-
-  return new Error("검색 결과가 없거나 여러 개 존재합니다.")  // FIXME: 결과가 2개 이상 나올 때 처리
-  /* const taskDueDate = element.querySelector("p.dueDate").innerText;
-  let taskTags = element.querySelector(".task-label").innerText; // tag로 검색하는 방법?
-  resultTodo = await findTaskDB("dueDate", taskDueDate);
-  console.log(resultTodo); */
-}
-
-/* async function fetchDBFromTaskId(id) {
-  return await findTaskDB("id", id);
-}
- */
 /* Task Element(div.task)를 완료 여부에 따라 이동시키는 함수 */
 function moveTaskElement(taskElement, destClassName) {
   const destElement = document.querySelector(`section.${destClassName}`)
@@ -438,12 +419,13 @@ const domElements = {
 
   domElements.taskLists.addEventListener("click", async (e) => {
     const thisTaskNode = e.target.closest("div.task");
+    const taskId = thisTaskNode.id;
     let thisTask;
     let dbOperation;
 
     // 2. 완료 및 미완료 Task 체크 할 때: 진행중, 완료 목록으로 이동
     if (e.target.matches(".task-label input[type=checkbox]")) {
-      const thisTaskObj = await findTaskFromElement(thisTaskNode);
+      const thisTaskObj = await findTaskDB("id", taskId);
 
       thisTask = new Todo(thisTaskObj);
       thisTask.toggleCompletion();
@@ -455,8 +437,8 @@ const domElements = {
     }
 
     // 3. 각 Task에 태그 추가
-    if (e.target.matches(".task-tags")) {  // TODO: 기존 태그 삭제하기
-      const thisTaskObj = await findTaskFromElement(thisTaskNode);
+    if (e.target.matches(".task-tags")) {  // TODO: 태그 추가 대신 아이콘으로 대체
+      const thisTaskObj = await findTaskDB("id", taskId);
       dbOperation = "modify";
       thisTask = new Todo(thisTaskObj);
 
@@ -487,12 +469,11 @@ const domElements = {
 
     // 4. Task 삭제
     if (e.target.matches(".close")) {
-      const thisTaskObj = await findTaskFromElement(thisTaskNode);
+      const thisTaskObj = await findTaskDB("id", taskId);
 
-      thisTask = new Todo(thisTaskObj);
       dbOperation = "delete";
       thisTaskNode.remove();
-      accessTaskDB(dbOperation, thisTask);
+      accessTaskDB(dbOperation, thisTaskObj);
     }
 
     // 5. Task 세부 내용 사이드 화면에서 보기
@@ -522,20 +503,17 @@ const domElements = {
   // 6. 만료일 수정
   domElements.taskLists.addEventListener("change", async (e) => {
     const thisTaskNode = e.target.closest("div.task");
+    const taskId = thisTaskNode.id;
     const thisDateLabel = thisTaskNode?.querySelector("label.dueDate");
     const nextDue = e.target.value;
-    let thisTask;
 
     if (nextDue && e.target.matches(".extra input")) {
-      const thisTaskObj = await findTaskFromElement(thisTaskNode);
-
-      thisTask = new Todo(thisTaskObj);
+      const thisTaskObj = await findTaskDB("id", taskId);
       dbOperation = "modify";
 
       thisDateLabel.textContent = nextDue; // 각 Task 목록에 만료일 표시 
-      thisTask.dueDate = nextDue;
-
-      accessTaskDB(dbOperation, thisTask);
+      thisTaskObj.dueDate = nextDue;
+      accessTaskDB(dbOperation, thisTaskObj);
     }
   })
 })();
@@ -648,10 +626,13 @@ document.addEventListener("click", (e) => { // cloned tag list 창 지우기
 
 loadLocalStorage();
 
-domElements.toggleDark.addEventListener("change", (e) => { darkModeSetter(e.target.checked)})
+domElements.toggleDark.addEventListener("change", (e) => { darkModeSetter(e.target.checked) })
 
 /* 다크모드 토글 함수 */
 function darkModeSetter(checked = false) {
+  console.log(checked);
   document.documentElement.setAttribute("dark-theme", checked);
   localStorage.setItem("dark-mode", checked);
 }
+
+console.log(window.matchMedia("(prefers-color-scheme: dark)").matches);
