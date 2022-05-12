@@ -8,59 +8,6 @@ class Todo {
     this.tags = object.tags || [];
   }
 
-  /* TODO: React 이용 */
-  createTaskNode() {
-    // 체크박스 만들기
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-
-    // 체크박스 라벨 만들기
-    const taskDiv = document.createElement("div");
-    taskDiv.appendChild(checkbox);
-    taskDiv.appendChild(document.createTextNode(this.title));
-    taskDiv.className = "task-label";
-
-    // 제거 버튼 만들기
-    const close = document.createElement("div");
-    close.appendChild(document.createTextNode("x"));
-    close.className = "close";
-    close.setAttribute("tabIndex", "0");
-
-    // 태그 만들기
-    const tagDiv = document.createElement("div");
-    tagDiv.className = "task-tags";
-
-    // 오른쪽 추가 정보(만료일, 닫기 버튼) 만들기
-    const extraDiv = document.createElement("div");
-
-    // 만료일자가 있을 때 만료일 만들기
-    const dateLabel = document.createElement("label");
-    const dateChanger = document.createElement("input");  // 만료일 수정 input element
-    dateLabel.setAttribute("for", "datepicker");
-    dateChanger.type = "date";
-    dateChanger.id = "datepicker";
-    dateLabel.className = "dueDate";
-    dateLabel.appendChild(dateChanger);
-
-    if (this.dueDate) {  // label에 만료일 표시
-      dateLabel.appendChild(document.createTextNode(this.dueDate));
-      /* dateLabel.value = `${this.dueDate}`; */
-    }
-    extraDiv.appendChild(dateLabel);
-    extraDiv.appendChild(close);
-    extraDiv.className = "extra";
-
-    // 모든 요소 묶기
-    const div = document.createElement("div");
-    div.appendChild(taskDiv);
-    div.appendChild(tagDiv);
-    div.appendChild(extraDiv);
-    div.id = this.id;
-    div.className = "task";
-
-    return div;
-  }
-
   toggleCompletion() {
     const toggle = this.isCompleted ? false : true;
     this.isCompleted = toggle;
@@ -71,6 +18,69 @@ class Todo {
     this.tags.push(tag);
   }
 }
+
+function configureTaskNode(taskObj) {  // FIXME: dueDate label 선택 시 다른 곳이 선택되는 문제 해결(id 다르게)
+  let returnNode = [];
+  const taskDueDate = taskObj.dueDate || "";
+  const taskNodeInfo = [
+    { tag: "input", type: "checkbox" },
+    { textNode: taskObj.title },
+    { tag: "div", class: "task-label" },
+
+    { tag: "div", class: "task-tags" },
+    { tag: "input", type: "date", id: "datepicker" },
+    { textNode: taskDueDate },
+    { tag: "label", class: "dueDate", for: "datepicker" },
+    { textNode: "x" },
+    { tag: "div", class: "close", tabIndex: "0" },
+    { tag: "div", class: "extra" },
+    { tag: "div", class: "task", id: taskObj.id }
+  ]
+  const hierarchy = [, , [0, 1], , , , [4, 5], , [7], [6, 8], [2, 3, 9]];
+
+  for (const prop of taskNodeInfo) {
+    const node = createNode(prop);
+    returnNode.push(node);
+  }
+  const confResult = appendNodes(returnNode, hierarchy)
+  return confResult;
+}
+
+/* Node에 대한 정보가 담긴 객체를 받아 Node를 만들어 반환하는 함수 */
+// nodeInfo = {tag: "div", className: "클래스명", id: "id", ...}
+function createNode(nodeInfo) {
+  let node;
+
+  for (const attr in nodeInfo) {
+    if (attr === "child") break;
+
+    if (attr === "textNode") {  // A. text Node 생성
+      node = document.createTextNode(nodeInfo[attr]);
+      return node;
+    }
+
+    if (attr === "tag") {  // B. HTML tag 생성
+      node = document.createElement(nodeInfo[attr]);
+    }
+    else {  // 속성 지정 시
+      node.setAttribute(attr, nodeInfo[attr]);
+    }
+  }
+  return node;
+}
+
+function appendNodes(nodeArray, hierarchy) {
+  for (let i = 0; n = hierarchy.length, i < n; i++) {
+    if (!hierarchy[i]) continue;
+
+    hierarchy[i].forEach(childIndex => {
+      nodeArray[i].appendChild(nodeArray[childIndex])
+    });
+  }
+  return nodeArray.at(-1);
+}
+
+
 
 /* Task 데이터 저장에 indexedDB 이용 */
 let db;
@@ -257,7 +267,7 @@ function addNewTask(todoTitle, _dueDate) {
   const newTaskParam = { title: todoTitle, dueDate: _dueDate };
   const newTask = new Todo(newTaskParam);
 
-  const element = newTask.createTaskNode();
+  const element = configureTaskNode(newTask);
   moveTaskElement(element, "ongoing");
   accessTaskDB("add", newTask); // DB에 할일 추가
 }
@@ -341,7 +351,7 @@ function loadIndexedDB() {
   taskFetchRequest.onsuccess = () => {  // C-1. DB 내의 Task를 HTML Element로 나타내기 
     taskFetchRequest.result.forEach((obj) => {
       let task = new Todo(obj);
-      const taskNode = task.createTaskNode();
+      const taskNode = configureTaskNode(task);
       const taskTagNode = taskNode.querySelector(".task-tags")
       const destClass = task.isCompleted ? "completed" : "ongoing";
 
