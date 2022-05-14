@@ -1,7 +1,7 @@
 # Todo-App
 Javascript를 이용한 Todo-App입니다.   
 
-[Todo App](https://htmlpreview.github.io/?https://github.com/ksheer506/Todo-App/blob/main/todo.html)
+[Todo App](https://ksheer506.github.io/Todo-App/todo.html)
   
 
 ## v.3.1 (2022. 5. 7.)
