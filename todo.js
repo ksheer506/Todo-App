@@ -289,7 +289,7 @@ function sideTextSave () {
     if (e.currentTarget.childNodes.length < 1) {
       const textInput = document.createElement("textarea");
       textInput.setAttribute("placeholder", "텍스트를 입력하세요.");
-      textInput.setAttribute("id", )
+      /* textInput.setAttribute("id", ) */
       sideText.appendChild(textInput);
       textInput.focus();  // 텍스트 입력창 포커스
     }

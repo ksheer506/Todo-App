@@ -100,11 +100,6 @@ async function configureTagNode(targetNode, tagArray, userOptions = {}) {
 	const tagNodes = tagNodeInfo.map(node => createNode(node));
 	const depth = hierarchyDetector(tagNodeInfo);
 
-
-	console.log("hierarchy", depth);
-
-	/* console.log(tagNodes); */
-
 	appendAllNodes(tagNodes, depth, targetNode);
 }
 
