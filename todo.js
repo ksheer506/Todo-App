@@ -1,25 +1,26 @@
-import { configureTaskNode, /* configureTagNode */ moveTaskNode } from "./modules/configureNodes.js"
+import { configureTaskNode, configureTagNode, moveTaskNode } from "./modules/configureNodes.js"
 import { db } from "./modules/indexedDB/initialLoad.js"
 import { accessTaskDB, accessTagDB } from "./modules/indexedDB/access.js"
+import { throttle } from "./modules/throttle.js"
 
 class Todo {
-  constructor(object) {
-    this.id = object.id || `id_${Date.now()}`;
-    this.title = object.title;
-    this.isCompleted = object.isCompleted || false;
-    this.dueDate = object.dueDate || '';
-    this.text = object.text || '';
-    this.tags = object.tags || [];
-  }
+    constructor(object) {
+      this.id = object.id || `id_${Date.now()}`;
+      this.title = object.title;
+      this.isCompleted = object.isCompleted || false;
+      this.dueDate = object.dueDate || '';
+      this.text = object.text || '';
+      this.tags = object.tags || [];
+    }
 
-  toggleCompletion() {
-    this.isCompleted = !this.isCompleted;
-  }
+    toggleCompletion() {
+      this.isCompleted = !this.isCompleted;
+    }
 
-  addNewTag(tag) {
-    this.tags.push(tag);
+    addNewTag(tag) {
+      this.tags.push(tag);
+    }
   }
-}
 
 /* indexedDB에서 primary key 또는 index를 통해 원하는 Task를 찾는 함수 */
 function findTaskDB(key, value) { // TODO: parameter로 object를 받아 검색할 수 았도록 수정
@@ -96,38 +97,6 @@ function addNewTask(taskTitle, _dueDate) {
   accessTaskDB('add', newTask); // DB에 할일 추가
 }
 
-/* 지정 위치에 Tag Node를 만드는 함수 */
-async function configureTagNode(targetNode, tagArray, userOptions = {}) {
-  let filteredTagArray = tagArray;
-  const { makeCheckbox, fetchDB } = { makeCheckbox: false, fetchDB: true, ...userOptions };
-
-  if (targetNode.className === 'tag-list' && fetchDB) { // 중복된 태그 생성을 막기 위해 indexedDB에 존재하는 태그를 제외한 배열을 만듦
-    const searchResult = await isTagExistInDB(tagArray);
-
-    filteredTagArray = tagArray.reduce((accu, nextObj, index) => {
-      if (!searchResult[index]) { accu.push(nextObj.tag); }
-      return accu;
-    }, []);
-  }
-
-
-
-  filteredTagArray.forEach((_tag) => { // TODO: 태그 리스트에 추가하는 경우, 각 Task에 태그를 추가하는 경우 함수 나누기
-
-    const tagNodeInfo = [
-      `<label class="tags">`,
-      ` ${_tag}`
-    ];
-
-    if (makeCheckbox) { // 태그별 Task 필터링을 위한 체크박스 생성
-      tagNodeInfo.push(` <input type="checkbox">`);
-    }
-
-
-    /* targetNode.appendChild(newTag); */
-  });
-}
-
 /* 해당 위치의 Tag Node를 삭제하는 함수(DB에서도 삭제) */
 // tagArray = ["태그1", "태그2", ...], 모든 태그를 삭제할 경우 []로 지정
 async function deleteTagNode(targetNode, tagArray = [], userOptions = {}) {
@@ -185,16 +154,17 @@ function loadLocalStorage() {
 
 /* 해당 Task를 사이드 패널에 표시해주는 함수 */
 // taskId = 해당 Task Node의 id
-async function configureSidePanel(taskId) {
+async function configureSidePanel(taskId) {  // TODO: 코드 정리, 간략화
+  const sidePanel = document.querySelector('aside');
   const sideTitle = document.querySelector('aside h2');
   const sideDueDate = document.querySelector('aside .dueDate');
   const sideTags = document.querySelector('aside .tag-list');
 
   const thisTaskData = await findTaskDB('id', taskId);
 
+  sidePanel.setAttribute("id", `side/${taskId}`);
   sideTitle.textContent = thisTaskData.title;
   sideDueDate.textContent = thisTaskData.dueDate;
-
   if (sideTags.textContent) {
     deleteTagNode(sideTags);
   }
@@ -223,76 +193,71 @@ async function configureSidePanel(taskId) {
   });
 })();
 
+async function taskEvent(e) {
+  const thisTaskNode = e.target.closest('div.task');
+  const taskId = thisTaskNode.id;
+
+  // 2. 완료 및 미완료 Task 체크 할 때: 진행중, 완료 목록으로 이동
+  if (e.target.matches('.task-label [type=checkbox]')) {
+    const thisTaskObj = await findTaskDB('id', taskId);
+
+    thisTaskObj.isCompleted = !thisTaskObj.isCompleted;
+
+    const destNodeClass = thisTaskObj.isCompleted ? 'completed' : 'ongoing';
+    moveTaskNode(thisTaskNode, destNodeClass);
+    accessTaskDB('modify', thisTaskObj);
+  }
+
+  // 3. 각 Task에 태그 추가
+  if (e.target.matches('.task-tags')) { // TODO: 태그 추가 대신 아이콘으로 대체
+    const thisTaskObj = await findTaskDB('id', taskId);
+
+    const tagList = document.querySelector('.tag-list').cloneNode(true); // 각 Task에 tag-list 클론 후 삽입
+    tagList.className = 'cloned-tag-list';
+    thisTaskNode.appendChild(tagList);
+
+    // tag-list의 태그를 클릭하면 해당 태그를 Task에 추가
+    tagList.addEventListener('click', async (e) => {
+      if (e.target.matches('.tags input')) {
+        const taskNodeId = e.target.closest('div.task').id;
+        const taskTag = [e.target.parentElement.textContent];
+
+        const fetchResult = await isTaskHasTag(taskTag) || [];
+        const taskIncluded = fetchResult.includes(taskNodeId);
+
+        if (!taskIncluded) {
+          appendTagToTask(thisTaskObj, taskTag);
+          fetchResult.push(taskNodeId); // Tag ObjectStore에 Task Id 넣어 갱신
+
+          const injectTagKey = [{ tag: taskTag[0], assignedTask: fetchResult }];
+          accessTagDB('modify', injectTagKey);
+        }
+        accessTaskDB('modify', thisTaskObj);
+      }
+    });
+  }
+
+  // 4. Task 삭제
+  if (e.target.matches('.close')) {
+    const thisTaskObj = await findTaskDB('id', taskId);
+
+    thisTaskNode.remove();
+    accessTaskDB('delete', thisTaskObj);
+  }
+
+  // 5. Task 세부 내용 사이드 화면에서 보기
+  if (e.target.matches('.task-label')) {
+    const { id } = e.target.closest('.task');
+    configureSidePanel(id);
+  }
+}
+
 
 /* Task 목록 관련 이벤트 핸들러 */
 (function () {
   const taskLists = document.querySelector('.todo_list');
 
-  taskLists.addEventListener('click', async (e) => {
-    const thisTaskNode = e.target.closest('div.task');
-    const taskId = thisTaskNode.id;
-    let thisTask;
-    let dbOperation;
-
-    // 2. 완료 및 미완료 Task 체크 할 때: 진행중, 완료 목록으로 이동
-    if (e.target.matches('.task-label [type=checkbox]')) {
-      const thisTaskObj = await findTaskDB('id', taskId);
-
-      thisTask = new Todo(thisTaskObj);
-      thisTask.toggleCompletion();
-      dbOperation = 'modify';
-
-      const destNodeClass = thisTask.isCompleted ? 'completed' : 'ongoing';
-      moveTaskNode(thisTaskNode, destNodeClass);
-      accessTaskDB(dbOperation, thisTask);
-    }
-
-    // 3. 각 Task에 태그 추가
-    if (e.target.matches('.task-tags')) { // TODO: 태그 추가 대신 아이콘으로 대체
-      const thisTaskObj = await findTaskDB('id', taskId);
-      dbOperation = 'modify';
-      thisTask = new Todo(thisTaskObj);
-
-      const tagList = document.querySelector('.tag-list').cloneNode(true); // 각 Task에 tag-list 클론 후 삽입
-      tagList.className = 'cloned-tag-list';
-      thisTaskNode.appendChild(tagList);
-
-      // tag-list의 태그를 클릭하면 해당 태그를 Task에 추가
-      tagList.addEventListener('click', async (e) => {
-        if (e.target.matches('.tags input')) {
-          const taskNodeId = e.target.closest('div.task').id;
-          const taskTag = [e.target.parentElement.textContent];
-
-          const fetchResult = await isTaskHasTag(taskTag) || [];
-          const taskIncluded = fetchResult.includes(taskNodeId);
-
-          if (!taskIncluded) {
-            appendTagToTask(thisTask, taskTag);
-            fetchResult.push(taskNodeId); // Tag ObjectStore에 Task Id 넣어 갱신
-
-            const injectTagKey = [{ tag: taskTag[0], assignedTask: fetchResult }];
-            accessTagDB('modify', injectTagKey);
-          }
-          accessTaskDB(dbOperation, thisTask);
-        }
-      });
-    }
-
-    // 4. Task 삭제
-    if (e.target.matches('.close')) {
-      const thisTaskObj = await findTaskDB('id', taskId);
-
-      dbOperation = 'delete';
-      thisTaskNode.remove();
-      accessTaskDB(dbOperation, thisTaskObj);
-    }
-
-    // 5. Task 세부 내용 사이드 화면에서 보기
-    if (e.target.matches('.task-label')) {
-      const { id } = e.target.closest('.task');
-      configureSidePanel(id);
-    }
-  });
+  taskLists.addEventListener('click', async (e) => { taskEvent(e) });
 
   // 6. 만료일 수정
   taskLists.addEventListener('change', async (e) => {
@@ -309,7 +274,33 @@ async function configureSidePanel(taskId) {
       accessTaskDB('modify', thisTaskObj);
     }
   });
-}());
+})();
+function sideTextSave () {
+  console.log("텍스트 입력");
+
+
+}
+/* 사이드 패널 관련 이벤트 핸들러 */
+(function () {
+  const sideText = document.querySelector("aside .text");
+
+  // 1. sideText 화면 클릭 시 텍스트 입력창 표시
+  sideText.addEventListener("click", (e) => {
+    if (e.currentTarget.childNodes.length < 1) {
+      const textInput = document.createElement("textarea");
+      textInput.setAttribute("placeholder", "텍스트를 입력하세요.");
+      textInput.setAttribute("id", )
+      sideText.appendChild(textInput);
+      textInput.focus();  // 텍스트 입력창 포커스
+    }
+  })
+
+  // 2. sideText 입력 내용 저장
+  sideText.addEventListener("keyup", (e) => {
+    throttle(sideTextSave, 400);
+  })
+
+})();
 
 /* 태그 관련 이벤트 핸들러 */
 (function () {
@@ -320,20 +311,19 @@ async function configureSidePanel(taskId) {
 
   // 1-1. 태그 목록에 새 태그 추가(Enter)
   newTag.addEventListener('keyup', (e) => {
-    if (e.keyCode === 13) {
-      if (newTag.value.length <= 1) {
-        alert('태그는 두 글자 이상을 입력해주세요.');
-        newTag.value = '';
-        return;
-      }
-
-      const newTags = newTag.value.match(/[^#\s]\S{0,}[^\s,]/g);
-      const tagArray = createTagKeyArr(newTags);
-
-      configureTagNode(tagList, tagArray, { makeCheckbox: true });
-      accessTagDB('add', tagArray);
+    if (e.keyCode !== 13) return;
+    if (newTag.value.length <= 1) {
+      alert('태그는 두 글자 이상을 입력해주세요.');
       newTag.value = '';
+      return;
     }
+
+    const newTags = newTag.value.match(/[^#\s]\S{0,}[^\s,]/g);
+    const tagArray = createTagKeyArr(newTags);
+
+    configureTagNode(tagList, tagArray, { makeCheckbox: true });
+    accessTagDB('add', tagArray);
+    newTag.value = '';
   });
 
   // 1-2. 태그 목록에 새 태그 추가(버튼 클릭)
@@ -419,5 +409,7 @@ function darkModeSetter(checked = false) {
   localStorage.setItem('dark-mode', checked);
 }
 
-const toggleDark = document.querySelector('#default');
-toggleDark.addEventListener('change', (e) => { darkModeSetter(e.target.checked); });
+(function () {
+  const toggleDark = document.querySelector('#default');
+  toggleDark.addEventListener('change', (e) => { darkModeSetter(e.target.checked); });
+})();

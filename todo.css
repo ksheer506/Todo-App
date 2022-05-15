@@ -167,10 +167,9 @@ aside {
 
 aside h2 {
   display: inline-block;
-  flex: 1 0 30px;
+  flex: 1 0 35px;
   margin-top: 15px;
   margin-bottom: 5px;
-  /* min-width: 30px; */
 }
 
 aside > .dueDate {
@@ -185,6 +184,18 @@ aside > .dueDate {
 
 aside > .text {
   flex: 1 1 100%;
+}
+
+aside > .text > textarea {
+ background-color: var(--color-nav-bg);
+ border: 0px;
+ resize: none;
+ width: 100%;
+ height: 300px;
+}
+
+aside > .text > textarea::placeholder {
+ font-size: 0.85rem;
 }
 
 aside > .tag-list {
@@ -420,14 +431,16 @@ header > h2 {
 
 /* 개별 태그 아이콘 */
 .tags {
-  display: inline-block;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   position: relative;
   cursor: pointer;
   height: 16px;
   width: auto;
   padding-left: 3px;
   padding-right: 3px;
-  border-radius: 15%;
+  border-radius: 15px;
   background-color: var(--color-tag-bg);
   font-size: 0.75rem;
   white-space: nowrap;
