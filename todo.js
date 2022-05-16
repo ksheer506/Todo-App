@@ -292,7 +292,7 @@ function sideTextSave () {
       /* textInput.setAttribute("id", ) */
       sideText.appendChild(textInput);
       textInput.focus();  // 텍스트 입력창 포커스
-    }
+    } 
   })
 
   // 2. sideText 입력 내용 저장
