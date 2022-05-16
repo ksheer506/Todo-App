@@ -10,7 +10,7 @@ function loadIndexedDB() {
 
   taskFetchRequest.onsuccess = () => { // C-1. DB 내의 Task를 HTML Element로 나타내기
     console.time("Configure Task Nodes");
-    console.log(taskFetchRequest.result);  // TODO: 전체 배열을 argument로 
+    console.log(taskFetchRequest.result.length);
     taskFetchRequest.result.forEach((obj) => {
       const taskNode = configureTaskNode(obj);
       const destClass = obj.isCompleted ? 'completed' : 'ongoing';

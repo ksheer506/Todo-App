@@ -195,7 +195,9 @@ async function configureSidePanel(taskId) {  // TODO: 코드 정리, 간략화
 
 async function taskEvent(e) {
   const thisTaskNode = e.target.closest('div.task');
-  const taskId = thisTaskNode.id;
+  const taskId = thisTaskNode?.id;
+
+  if (!thisTaskNode) return;
 
   // 2. 완료 및 미완료 Task 체크 할 때: 진행중, 완료 목록으로 이동
   if (e.target.matches('.task-label [type=checkbox]')) {
@@ -262,7 +264,7 @@ async function taskEvent(e) {
   // 6. 만료일 수정
   taskLists.addEventListener('change', async (e) => {
     const thisTaskNode = e.target.closest('div.task');
-    const taskId = thisTaskNode.id;
+    const taskId = thisTaskNode?.id;
     const thisDateLabel = thisTaskNode?.querySelector('label.dueDate');
     const nextDue = e.target.value;
 
