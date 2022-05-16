@@ -1,6 +1,6 @@
 import { configureTaskNode, configureTagNode, moveTaskNode } from "./modules/configureNodes.js"
-import { db } from "./modules/indexedDB/initialLoad.js"
-import { accessTaskDB, accessTagDB } from "./modules/indexedDB/access.js"
+import { db } from "./modules/db/initialLoad.js"
+import { accessTaskDB, accessTagDB } from "./modules/db/access.js"
 import { throttle } from "./modules/throttle.js"
 
 class Todo {
@@ -275,6 +275,7 @@ async function taskEvent(e) {
     }
   });
 })();
+
 function sideTextSave () {
   console.log("텍스트 입력");
 

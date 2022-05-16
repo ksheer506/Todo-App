@@ -1,4 +1,4 @@
-import { isTagExistInDB } from "./indexedDB/fetching.js"
+import { isTagExistInDB } from "./db/fetching.js"
 
 /* Node에 대한 정보가 담긴 객체를 받아 Node를 만들어 반환하는 함수 */
 // nodeInfo = {tag: "div", className: "클래스명", id: "id", ...}
@@ -70,7 +70,6 @@ function configureTaskNode(taskObj) {
 	}
 	const depth = hierarchyDetector(taskNodeInfo);
 	const [confResult] = appendAllNodes(returnNode, depth);
-
 	return confResult;
 }
 
