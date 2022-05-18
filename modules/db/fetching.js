@@ -9,13 +9,13 @@ function isTagExistInDB(keyArray) {
   const resultPromises = [];
 
   keyArray.forEach((key, index) => {
-    const tag = key.tag ? key.tag : key;
+    /* const tag = key.tag ? key.tag : key; */
+    let tag = key.tag || key;
 
     searchRequests[index] = tagObjectStore.get(tag);
     resultPromises[index] = new Promise((resolve) => {
       searchRequests[index].onsuccess = (e) => { // 검색 결과가 없을 경우 결과값 undefined로 onsuccess 실행
-        const searchResult = e.target.result || null;
-        resolve(searchResult);
+        resolve(e.target.result || null);
       };
     });
   });
