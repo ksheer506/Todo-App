@@ -50,14 +50,13 @@ function isTagExistInDB(keyArray) {
   const searchRequests = [];
   const resultPromises = [];
 
-  keyArray.forEach((key, index) => {
-    const tag = key.tag ? key.tag : key;
+  keyArray.forEach((key, i) => {
+    const tag = key?.tag || key;
 
-    searchRequests[index] = tagObjectStore.get(tag);
-    resultPromises[index] = new Promise((resolve) => {
-      searchRequests[index].onsuccess = (e) => { // 검색 결과가 없을 경우 결과값 undefined로 onsuccess 실행
-        const searchResult = e.target.result || null;
-        resolve(searchResult);
+    searchRequests[i] = tagObjectStore.get(tag);
+    resultPromises[i] = new Promise((resolve) => {
+      searchRequests[i].onsuccess = (e) => { // 검색 결과가 없을 경우 결과값 undefined로 onsuccess 실행
+        resolve(e.target.result || null);
       };
     });
   });
@@ -70,8 +69,9 @@ function isTagExistInDB(keyArray) {
 async function isTaskHasTag(tagArray) { // taskArray를 입력받지 않으면 해당 Tag를 가진 모든 Task 배열을 반환
   if (!Array.isArray(tagArray)) return;
 
-  const fetchResult = await isTagExistInDB(tagArray);
+  const fetchResult = await isTagExistInDB(tagArray);  // return: [{"tag": "태그1", "assignedTask": ["id_1", "id_2"]}, ...]
 
+  // 검색된 태그를 모두 가지는 Task를 필터링하는 함수(교집합)
   return fetchResult.reduce((accu, next, index) => {
     if (index === 0) { return next.assignedTask; }
     if (!next.length) return [];
@@ -152,16 +152,17 @@ function loadLocalStorage() {
 /* 해당 Task를 사이드 패널에 표시해주는 함수 */
 // taskId = 해당 Task Node의 id
 async function configureSidePanel(taskId) {  // TODO: 코드 정리, 간략화
-  const thisTaskData = await findTaskDB('id', taskId);
+  const thisTask = await findTaskDB('id', taskId);
 
   dom.sdPanel.setAttribute("id", `side/${taskId}`);
-  dom.sdTitle.textContent = thisTaskData.title;
-  dom.sdDueDate.textContent = thisTaskData.dueDate;
+  dom.sdTitle.textContent = thisTask.title;
+  dom.sdDueDate.textContent = thisTask.dueDate;
+  dom.sdText.textContent = thisTask.text;
+
   if (dom.sdTags.textContent) {
     deleteTagNode(dom.sdTags);
   }
-
-  configureTagNode(dom.sdTags, thisTaskData.tags, { fetchDB: false });
+  configureTagNode(dom.sdTags, thisTask.tags, { fetchDB: false });
 }
 
 /* Task 추가 이벤트 핸들러 */
@@ -237,6 +238,12 @@ async function taskEvent(e) {
 
   // 5. Task 세부 내용 사이드 화면에서 보기
   if (e.target.matches('.task-label')) {
+    if (document.documentElement.clientWidth <= 600) {
+      document.querySelector("aside").classList.add("show");
+      document.querySelector("#background").classList.add("show");
+
+    }
+
     const { id } = e.target.closest('.task');
     configureSidePanel(id);
   }
@@ -265,31 +272,74 @@ async function taskEvent(e) {
   });
 })();
 
-function sideTextSave() {
-  console.log("텍스트 입력");
+async function sideTextSave(e) {
+  const [taskId] = dom.sdPanel.id.match(/(?<=\/)id(.*)/);
+  const task = await findTaskDB("id", taskId);
 
-
+  accessTaskDB("modify", { ...task, ...{ "text": e.target.value } })
 }
+
+
+function sidePanelToggle() {
+  if (dom.sdPanel.classList.contains("show")) {
+    dom.sdPanel.classList.remove("show");
+    dom.sdBG.classList.remove("show");
+    return;
+  }
+  dom.sdPanel.classList.add("show");
+  dom.sdBG.classList.add("show");
+};
+
+
+
 
 /* 사이드 패널 관련 이벤트 핸들러 */
 (function () {
   // 1. sideText 화면 클릭 시 텍스트 입력창 표시
   dom.sdText.addEventListener("click", (e) => {
-    if (e.currentTarget.childNodes.length < 1) {
+    const {nodeType, textContent} = dom.sdText.childNodes[0] || {};
+
+    if (!nodeType) {  // 아무 element도 없을 때
       const textInput = document.createElement("textarea");
 
       textInput.setAttribute("placeholder", "텍스트를 입력하세요.");
       dom.sdText.appendChild(textInput);
       textInput.focus();  // 텍스트 입력창 포커스
+      return;
     }
+
+    if (nodeType === 3) {
+      const textInput = document.createElement("textarea");
+
+      textInput.setAttribute("placeholder", "텍스트를 입력하세요.");
+      textInput.textContent = textContent;
+      dom.sdText.replaceChild(textInput, dom.sdText.childNodes[0]);
+      textInput.focus();  // 텍스트 입력창 포커스
+    }
+
+
   })
 
   // 2. sideText 입력 내용 저장
   dom.sdText.addEventListener("keyup", (e) => {
-    throttle(sideTextSave, 400);
+    throttle(sideTextSave, 400, e);
   })
 
+  dom.sdText.addEventListener("focusout", (e) => {
+    sideTextSave(e);
+    sidePanelToggle();
+    e.target.remove();
+  })
+
+  dom.sdBG.addEventListener("click", (e) => {
+    sideTextSave(e);
+    sidePanelToggle();
+    console.log(e.target);
+  });
+
 })();
+
+
 
 /* 태그 관련 이벤트 핸들러 */
 (function () {
