@@ -273,7 +273,7 @@ async function taskEvent(e) {
 async function sideTextSave(e) {
   const [taskId] = dom.sdPanel.id.match(/(?<=\/)id(.*)/);
   const task = await findTaskDB("id", taskId);
-console.log(e.target.value);
+
   accessTaskDB("modify", { ...task, ...{ "text": e.target.value } })
 }
 
@@ -291,7 +291,7 @@ function sidePanelToggle() {
 
 /* 사이드 패널 관련 이벤트 핸들러 */
 (function () {
-  const editState = false;
+  let editState = false;
   // 1. sideText 화면 클릭 시 텍스트 입력창 표시
   dom.sdText.addEventListener("click", (e) => {
     const {nodeType, textContent} = dom.sdText.childNodes[0] || {};
@@ -302,6 +302,7 @@ function sidePanelToggle() {
       textInput.setAttribute("placeholder", "텍스트를 입력하세요.");
       dom.sdText.appendChild(textInput);
       textInput.focus();  // 텍스트 입력창 포커스
+      editState = true;
       return;
     }
 
@@ -312,20 +313,23 @@ function sidePanelToggle() {
       textInput.textContent = textContent;
       dom.sdText.replaceChild(textInput, dom.sdText.childNodes[0]);
       textInput.focus();  // 텍스트 입력창 포커스
+      editState = true;
     }
   })
 
   // 2-1. sideText 입력 내용 저장: focus-out할 때
   dom.sdText.addEventListener("focusout", (e) => {
-    sideTextSave(e);
+    if (editState) sideTextSave(e);
     sidePanelToggle();
     e.target.remove();
+    editState = false;
   })
 
   // 2-2. sideText 입력 내용 저장: background 클릭할 때
   dom.sdBG.addEventListener("click", (e) => {
-    sideTextSave(e);
+    if (editState) sideTextSave(e);
     sidePanelToggle();
+    editState = false;
   });
 
 })();
