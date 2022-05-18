@@ -105,8 +105,8 @@ body {
 
 body {
   display: grid;
-  grid-template-columns: 1fr 1fr minmax(240px, 35vw);
-  grid-template-rows: 1fr minmax(100px, 95vh);
+  grid-template-columns: 1fr 1fr 270px;
+  grid-template-rows: 1fr 90vh;
   grid-auto-flow: column;
   column-gap: 10px;
   row-gap: 10px;
@@ -710,7 +710,7 @@ main > hr {
 
 @media (max-width: 600px) {
   body {
-    grid-template-columns: 1fr 1fr minmax(20vw, 250px);
+    grid-template-columns: 1fr 1fr 65vw;
   }
 
   main {
