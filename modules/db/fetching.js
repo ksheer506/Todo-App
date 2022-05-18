@@ -8,13 +8,12 @@ function isTagExistInDB(keyArray) {
   const searchRequests = [];
   const resultPromises = [];
 
-  keyArray.forEach((key, index) => {
-    /* const tag = key.tag ? key.tag : key; */
+  keyArray.forEach((key, i) => {
     let tag = key.tag || key;
 
-    searchRequests[index] = tagObjectStore.get(tag);
-    resultPromises[index] = new Promise((resolve) => {
-      searchRequests[index].onsuccess = (e) => { // 검색 결과가 없을 경우 결과값 undefined로 onsuccess 실행
+    searchRequests[i] = tagObjectStore.get(tag);
+    resultPromises[i] = new Promise((resolve) => {
+      searchRequests[i].onsuccess = (e) => { // 검색 결과가 없을 경우 결과값 undefined로 onsuccess 실행
         resolve(e.target.result || null);
       };
     });
@@ -30,8 +29,8 @@ async function isTaskHasTag(tagArray) { // taskArray를 입력받지 않으면 �
 
   const fetchResult = await isTagExistInDB(tagArray);
 
-  return fetchResult.reduce((accu, next, index) => {
-    if (index === 0) { return next.assignedTask; }
+  return fetchResult.reduce((accu, next, i) => {
+    if (i === 0) { return next.assignedTask; }
     if (!next.length) return [];
     return next.assignedTask.filter((taskId) => accu.includes(taskId));
   }, []);
