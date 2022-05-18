@@ -239,9 +239,7 @@ async function taskEvent(e) {
   // 5. Task 세부 내용 사이드 화면에서 보기
   if (e.target.matches('.task-label')) {
     if (document.documentElement.clientWidth <= 600) {
-      document.querySelector("aside").classList.add("show");
-      document.querySelector("#background").classList.add("show");
-
+      sidePanelToggle();
     }
 
     const { id } = e.target.closest('.task');
@@ -275,26 +273,25 @@ async function taskEvent(e) {
 async function sideTextSave(e) {
   const [taskId] = dom.sdPanel.id.match(/(?<=\/)id(.*)/);
   const task = await findTaskDB("id", taskId);
-
+console.log(e.target.value);
   accessTaskDB("modify", { ...task, ...{ "text": e.target.value } })
 }
 
-
 function sidePanelToggle() {
-  if (dom.sdPanel.classList.contains("show")) {
-    dom.sdPanel.classList.remove("show");
-    dom.sdBG.classList.remove("show");
+  if (dom.sdPanel.classList.contains("sideshow")) {
+    dom.main.classList.remove("sideshow");
+    dom.sdPanel.classList.remove("sideshow");
+    dom.sdBG.classList.remove("sideshow");
     return;
   }
-  dom.sdPanel.classList.add("show");
-  dom.sdBG.classList.add("show");
+  dom.main.classList.add("sideshow");
+  dom.sdPanel.classList.add("sideshow");
+  dom.sdBG.classList.add("sideshow");
 };
-
-
-
 
 /* 사이드 패널 관련 이벤트 핸들러 */
 (function () {
+  const editState = false;
   // 1. sideText 화면 클릭 시 텍스트 입력창 표시
   dom.sdText.addEventListener("click", (e) => {
     const {nodeType, textContent} = dom.sdText.childNodes[0] || {};
@@ -316,25 +313,19 @@ function sidePanelToggle() {
       dom.sdText.replaceChild(textInput, dom.sdText.childNodes[0]);
       textInput.focus();  // 텍스트 입력창 포커스
     }
-
-
   })
 
-  // 2. sideText 입력 내용 저장
-  dom.sdText.addEventListener("keyup", (e) => {
-    throttle(sideTextSave, 400, e);
-  })
-
+  // 2-1. sideText 입력 내용 저장: focus-out할 때
   dom.sdText.addEventListener("focusout", (e) => {
     sideTextSave(e);
     sidePanelToggle();
     e.target.remove();
   })
 
+  // 2-2. sideText 입력 내용 저장: background 클릭할 때
   dom.sdBG.addEventListener("click", (e) => {
     sideTextSave(e);
     sidePanelToggle();
-    console.log(e.target);
   });
 
 })();

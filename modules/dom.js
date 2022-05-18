@@ -1,3 +1,4 @@
+const main = document.querySelector('main');
 const mainTitle = document.querySelector('header > h2');
 const editTitle = document.querySelector('#edit-title');
 const darkToggler = document.querySelector('#default');
@@ -28,7 +29,7 @@ const deleteTagBtn = document.querySelector('.tag-conf #deleteTag');
 const tagList = document.querySelector('.tag-list');
 
 export {
-  mainTitle, editTitle, darkToggler, 
+  main, mainTitle, editTitle, darkToggler, 
   sdPanel, sdTitle, sdDueDate, sdTags, sdText, sdBG,
   newTask, datePicker, addBtn, taskList, allTasks,
   newTag, addTagBtn, deleteTagBtn, tagList,
