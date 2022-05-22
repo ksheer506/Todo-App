@@ -25,8 +25,7 @@ class Todo {
 
 /* indexedDB에서 primary key 또는 index를 통해 원하는 Task를 찾는 함수 */
 function findTaskDB(key, value) { // TODO: parameter로 object를 받아 검색할 수 았도록 수정
-  const transaction = db.transaction('task');
-  const taskObjectStore = transaction.objectStore('task');
+  const taskObjectStore = db.transaction('task').objectStore('task');
   let searchRequest;
 
   if (key === 'id') {
@@ -45,8 +44,7 @@ function findTaskDB(key, value) { // TODO: parameter로 object를 받아 검색�
 /* 태그 배열을 받아 해당 태그가 indexedDB에 존재하는지 검색하고, 그 결과를 반환하는 함수 */
 // keyArray = [{"tag": "태그1", "assignedTask": ["id_1", "id_2"]}, ...] 또는 ["태그1", "태그2", ...]
 function isTagExistInDB(keyArray) {
-  const transaction = db.transaction('tagList');
-  const tagObjectStore = transaction.objectStore('tagList');
+  const tagObjectStore = db.transaction('tagList').objectStore('tagList');
   const searchRequests = [];
   const resultPromises = [];
 
@@ -99,27 +97,24 @@ function addNewTask(taskTitle, _dueDate) {
 }
 
 /* 해당 위치의 Tag Node를 삭제하는 함수(DB에서도 삭제) */
-// tagArray = ["태그1", "태그2", ...], 모든 태그를 삭제할 경우 []로 지정
-async function deleteTagNode(targetNode, tagArray = [], userOptions = {}) {
+// tagArray = ["태그1", "태그2", ...], 모든 태그를 삭제할 경우 할당 x
+async function deleteTagNode(targetNode, tagArray = "all", userOptions = {}) {
   const allTagNodes = targetNode.querySelectorAll('.tags');
   const { clearDB } = { clearDB: false, ...userOptions };
   const tagKeyValue = [];
   let targetTags = tagArray;
 
-
-  if (!tagArray.length) { // tagArray = []일 때
+  if (tagArray === "all") {
     targetTags = Array.from(allTagNodes).map((tagNode) => tagNode.textContent);
   }
 
   allTagNodes.forEach((tagNode) => {
     if (targetTags.includes(tagNode.textContent)) {
-      const tagObj = { tag: tagNode.textContent };
-
-      tagKeyValue.push(tagObj);
+      tagKeyValue.push( { "tag": tagNode.textContent } );
       tagNode.remove();
     }
   });
-  if (!clearDB) accessTagDB('delete', tagKeyValue);
+  if (clearDB) accessTagDB('delete', tagKeyValue);
 }
 
 function appendTagToTask(targetTask, _tags) {
@@ -137,7 +132,7 @@ function appendTagToTask(targetTask, _tags) {
 
 /* localStorage에 저장된 데이터(할일 제목, 다크모드 여부)를 불러오는 함수 */
 function loadLocalStorage() {
-  const userTitle = localStorage.getItem('title');
+  const userTitle = localStorage.getItem('title') || '할 일 목록';
   const userDarkMode = localStorage.getItem('dark-mode');
 
   if (userTitle) { // Title 변경
