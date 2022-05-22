@@ -71,7 +71,7 @@ async function isTaskHasTag(tagArray) { // taskArray를 입력받지 않으면 �
 
   const fetchResult = await isTagExistInDB(tagArray);  // return: [{"tag": "태그1", "assignedTask": ["id_1", "id_2"]}, ...]
 
-  // 검색된 태그를 모두 가지는 Task를 필터링하는 함수(교집합)
+  // 검색된 태그를 모두 가지는 Task를 필터링(교집합)
   return fetchResult.reduce((accu, next, index) => {
     if (index === 0) { return next.assignedTask; }
     if (!next.length) return [];
