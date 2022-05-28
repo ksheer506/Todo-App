@@ -125,6 +125,7 @@ main {
   grid-row-start: 2;
   overflow-y: scroll;
   overflow-x: hidden;
+  padding-right: 5px;
 }
 
 /* navigation 바 */
@@ -505,13 +506,14 @@ main > hr {
 }
 
 /* 진행중 및 완료 목록 section */
-.todo_list > section {
+.todo_list > ul {
   margin-top: 3px;
   margin-bottom: 18px;
   display: flex;
   flex-flow: row wrap;
   align-items: center;
   column-gap: 10px;
+  padding-left: 3px;
 }
 
 .task-label {
@@ -526,7 +528,7 @@ main > hr {
 }
 
 /* 진행중, 완료 목록 (공통) */
-.todo_list > section {
+.todo_list > ul {
   position: relative;
   border-radius: 3px;
   box-shadow: rgba(100, 100, 111, 0.2) 0px 3px 5px 0px;

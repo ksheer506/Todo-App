@@ -50,7 +50,7 @@ function configureTaskNode(taskObj) {
   const returnNode = [];
   const taskDueDate = taskObj.dueDate || '';
   const taskNodeInfo = [
-    `<div class="task" id="${taskObj.id}">`,
+    `<li class="task" id="${taskObj.id}">`,
     `	<div class="task-label">`,
     `		<input type="checkbox">`,
     `		${taskObj.title}`,
@@ -103,7 +103,7 @@ async function configureTagNode(targetNode, tagArray, userOptions = {}) {
 
 /* Task Element(div.task)를 완료 여부에 따라 이동시키는 함수 */
 function moveTaskNode(taskNode, destClassName) {
-  const destElement = document.querySelector(`section.${destClassName}`);
+  const destElement = document.querySelector(`ul.${destClassName}`);
   destElement.appendChild(taskNode);
 
   if (destClassName === 'ongoing') { // 미완료된 할일일 경우
