@@ -178,7 +178,7 @@ async function configureSidePanel(taskId) {  // TODO: 코드 정리, 간략화
 })();
 
 async function taskEvent(e) {
-  const thisTaskNode = e.target.closest('div.task');
+  const thisTaskNode = e.target.closest('li.task');
   const taskId = thisTaskNode?.id;
 
   if (!thisTaskNode) return;
@@ -250,7 +250,7 @@ async function taskEvent(e) {
 
   // 6. 만료일 수정
   dom.taskList.addEventListener('change', async (e) => {
-    const thisTaskNode = e.target.closest('div.task');
+    const thisTaskNode = e.target.closest('li.task');
     const taskId = thisTaskNode?.id;
     const thisDateLabel = thisTaskNode?.querySelector('label.dueDate');
     const nextDue = e.target.value;
