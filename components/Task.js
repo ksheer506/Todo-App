@@ -1,14 +1,12 @@
 /* const { useState, useEffect, useRef, useCallback } = React; */
 
 const taskObj1 = [
-  { title: "할일1", id: "id_4577435", dueDate: "2022-05-25", text: "텍스트1", isCompleted: false },
-  { title: "할일2", id: "id_4545535", dueDate: "2022-04-25", text: "텍스트2", isCompleted: false },
-  { title: "할일3", id: "id_4177435", text: "텍스트3", isCompleted: false },
-];
-const taskObj2 = [
-  { title: "할일5", id: "id_4577435", dueDate: "2022-05-25", text: "텍스트1", isCompleted: true },
-  { title: "할일6", id: "id_4545535", dueDate: "2022-04-25", text: "텍스트2", isCompleted: true },
-  { title: "할일7", id: "id_4177435", text: "텍스트3", isCompleted: true },
+  { title: "할일1", id: "id_1", dueDate: "2022-05-25", text: "텍스트1", isCompleted: false },
+  { title: "할일2", id: "id_2", dueDate: "2022-04-25", text: "텍스트2", isCompleted: false },
+  { title: "할일3", id: "id_3", text: "텍스트3", isCompleted: false },
+  { title: "할일5", id: "id_5", dueDate: "2022-05-25", text: "텍스트1", isCompleted: true },
+  { title: "할일6", id: "id_6", dueDate: "2022-04-25", text: "텍스트2", isCompleted: true },
+  { title: "할일7", id: "id_7", text: "텍스트3", isCompleted: true },
 ];
 
 const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }) {
@@ -21,16 +19,15 @@ const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange })
 });
 
 function Task(props) {
-  const [title, setTitle] = React.useState(props.title);
-  const [dueDate, setDueDate] = React.useState(props.dueDate);
+  const { title, dueDate, id, isCompleted, text, onChangeCompletion } = props;
+  /* const [title, setTitle] = React.useState(props.title); */
+  /* const [dueDate, setDueDate] = React.useState(props.dueDate); */
 
   const onChangeDueDate = (e) => {
     setDueDate(e.target.value);
   };
 
-
   const chkBox = useRef(null);
-
   const propsDueDate = {
     id: props.id,
     onChange: onChangeDueDate,
@@ -38,12 +35,12 @@ function Task(props) {
   };
 
   return (
-    <li className="task" id={props.id}>
+    <li className="task" id={id}>
       <div className="task-label">
         <input
           type="checkbox"
-          onChange={() => props.onChangeCompletion(props)}
-          checked={props.isCompleted}
+          onChange={() => onChangeCompletion(props)}
+          checked={isCompleted}
           ref={chkBox} />
         {title}
       </div>
@@ -74,9 +71,9 @@ function TaskListSection({ sectionClass, taskArr, onChangeCompletion }) {
   );
 }
 
-function TaskList({ ongoing, completed }) {
-  const [ongoingArr, setOngoingArr] = useState(ongoing);
-  const [completedArr, setCompletedArr] = useState(completed);
+function TaskList({ taskArr }) {
+  const [ongoingArr, setOngoingArr] = useState(taskArr.filter(obj => !obj.isCompleted));
+  const [completedArr, setCompletedArr] = useState(taskArr.filter(obj => obj.isCompleted));
 
   const onChangeCompletion = (taskProps) => {
     const { isCompleted, id } = taskProps;
@@ -123,6 +120,9 @@ function TaskList({ ongoing, completed }) {
     onChangeCompletion: onChangeCompletion
   };
 
+  console.log("미완료: ", ongoingArr);
+  console.log("완료: ", completedArr);
+
   return (
     <article className="todo_list">
       <TaskListSection {...ongoingSect} />
@@ -131,4 +131,4 @@ function TaskList({ ongoing, completed }) {
   );
 }
 
-ReactDOM.render(<TaskList ongoing={taskObj1} completed={taskObj2} />, document.getElementById("root"));
+ReactDOM.render(<TaskList taskArr={taskObj1} />, document.getElementById("root"));
