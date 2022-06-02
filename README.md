@@ -1,7 +1,7 @@
 # Todo-App
 Javascript를 이용한 Todo-App입니다.   
 
-[Todo App](https://ksheer506.github.io/todo-app/todo.html)
+[Todo App](https://ksheer506.github.io/Todo-App/todo.html)
   
 ##
 
