@@ -1,8 +1,10 @@
+import { useCallback, useMemo, useState } from 'react';
+import { accessTaskDB, accessTagDB } from './modules/db/access.js'
+
+
 import TaskList from "./components/Task.js";
 import { AddNewTask, AddNewTags } from "./components/AddNewItems.js"
 import SideMenu from "./components/SideMenu.js"
-import { useCallback, useMemo, useState } from "react";
-
 
 
 class Todo {
@@ -24,49 +26,59 @@ class Todo {
   }
 }
 
+function findTaskObj(tasks, taskId) {
+  return tasks.filter(taskObj => taskObj.id === taskId)[0];
+};
+
+
 function App({ tasks }) {
   const [newTask, setNewTask] = useState({ title: "", dueDate: null });
   const [side, setSide] = useState(null);
   const [ongoingArr, setOngoingArr] = useState(tasks.filter(obj => !obj.isCompleted));
   const [completedArr, setCompletedArr] = useState(tasks.filter(obj => obj.isCompleted));
-  console.log(tasks);
 
   const showToSide = useCallback((props) => {
     setSide(props);
   }, []); // deps로 side를 지정하지 않는다면?
 
+  /* 1. 새 할일 추가 */
   const addTaskCallbacks = useCallback({
     newTitle: (e) => {
       setNewTask(prevTask => ({ ...prevTask, title: e.target.value }));
-      console.log(newTask);
     },
     newDueDate: (e) => {
       setNewTask(prevTask => ({ ...prevTask, dueDate: e.target.value }))
     },
     addTask: (e) => {
       const newTaskInst = new Todo(newTask);
-      console.log(newTaskInst);
+
       setOngoingArr(prevOngoing => {
         const nextOngoing = prevOngoing.slice();
         nextOngoing.push(newTaskInst);
 
         return nextOngoing;
       });
-      setNewTask({ title: "", dueDate: null });
+
+      accessTaskDB("add", newTaskInst);  // DB 변경
+      setNewTask({ title: "", dueDate: null });  // 제목, 만료일 비우기
     }
   }, [newTask]);
 
-  const toggleCompletion = useCallback((taskProps) => {
-    const { isCompleted, id } = taskProps;
-    const modifiedTaskProps = { ...taskProps, isCompleted: !taskProps.isCompleted };
+  /* 1. 할일 완료/미완료 여부 변경 */
+  const toggleCompletion = useCallback((taskObj) => {
+    const { isCompleted, id } = taskObj;
+    const modifiedTaskObj = { ...taskObj, isCompleted: !taskObj.isCompleted };
 
+    accessTaskDB('modify', modifiedTaskObj);  // DB 수정
+
+    // State: ongoingArr, completedArr 변경
     if (!isCompleted) {
       setOngoingArr(prevOngoing => {
         return prevOngoing.filter(taskObj => taskObj.id !== id);
       });
       setCompletedArr(prevCompleted => {
         const nextCompleted = prevCompleted.slice();
-        nextCompleted.push(modifiedTaskProps);
+        nextCompleted.push(modifiedTaskObj);
         return nextCompleted;
       });
 
@@ -78,16 +90,24 @@ function App({ tasks }) {
     });
     setOngoingArr(prevOngoing => {
       const nextOngoing = prevOngoing.slice();
-      nextOngoing.push(modifiedTaskProps);
+      nextOngoing.push(modifiedTaskObj);
       return nextOngoing;
+    });
+  }, [ongoingArr, completedArr]);
+
+  /* 2. 할일 삭제 */
+  const deleteTask = useCallback((taskId) => {
+    const taskObj = findTaskObj(tasks, taskId);
+
+    accessTaskDB('delete', taskObj);
+    setCompletedArr(prevCompleted => {  // TODO: 할일 배열을 하나로 관리하는 방법?
+      return prevCompleted.filter(taskObj => taskObj.id !== taskId);
+    });
+    setOngoingArr(prevOngoing => {
+      return prevOngoing.filter(taskObj => taskObj.id !== taskId);
     });
 
   }, [ongoingArr, completedArr]);
-
-
-
-
-
 
   return (
     <div className="front">
@@ -99,6 +119,7 @@ function App({ tasks }) {
           completed={completedArr}
           toggleCompletion={toggleCompletion}
           onTitleClick={showToSide}
+          onDelete={deleteTask}
         />
       </main>
       <SideMenu {...side} />
