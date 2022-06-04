@@ -11,35 +11,42 @@ const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange })
 });
 
 const Task = React.memo(function (props) {
-  const { title, dueDate, id, isCompleted, text, onChangeCompletion, onTitleClick } = props;
+  const { onTitleClick, onChangeCompletion, onDelete, ...taskObj } = props;
+
   const propsDueDate = {
-    id: props.id,
+    id: taskObj.id,
     /* onChange: onChangeDueDate, */
-    dueDate: dueDate
+    dueDate: taskObj.dueDate
   };
 
   return (
-    <li className="task" id={id}>
-      <div className="task-label" onClick={() => { onTitleClick(props) }}>
+    <li className="task" id={taskObj.id}>
+      <div className="task-label" onClick={() => { onTitleClick(taskObj) }}>
         <input
           type="checkbox"
-          onChange={() => onChangeCompletion(props)}
-          checked={isCompleted} />
-        {title}
+          onChange={() => onChangeCompletion(taskObj)}
+          checked={taskObj.isCompleted} />
+        {taskObj.title}
       </div>
       <div className="task-tags"></div>
       <div className="extra">
         <MemoDatePicker {...propsDueDate} />
-        <div className="close" tabIndex="0">x</div>
+        <div className="close" tabIndex="0" onClick={() => { onDelete(taskObj.id) }}>x</div>
       </div>
     </li>
   );
 });
 
-function TaskListSection({ sectionClass, taskArr, onChangeCompletion, onTitleClick }) {
+function TaskListSection({ sectionClass, taskArr, onChangeCompletion, onTitleClick, onDelete }) {
   const sectionName = (sectionClass === "ongoing") ? "진행중" : "완료";
   const tasks = taskArr.map((obj) => {
-    return <Task {...obj} onChangeCompletion={onChangeCompletion} onTitleClick={onTitleClick} key={obj.id} />
+    return <Task
+      {...obj}
+      onChangeCompletion={onChangeCompletion}
+      onTitleClick={onTitleClick}
+      onDelete={onDelete}
+      key={obj.id}
+    />
   });
 
   return (
@@ -55,7 +62,7 @@ function TaskListSection({ sectionClass, taskArr, onChangeCompletion, onTitleCli
 }
 
 const TaskList = React.memo(function TaskList(props) {
-  const { ongoing, completed, onTitleClick, toggleCompletion } = props;
+  const { ongoing, completed, onTitleClick, toggleCompletion, onDelete } = props;
 
   useEffect(() => {
     /* console.log("미완료: ", ongoingArr);
@@ -66,13 +73,15 @@ const TaskList = React.memo(function TaskList(props) {
     sectionClass: "ongoing",
     taskArr: ongoing,
     onChangeCompletion: toggleCompletion,
-    onTitleClick: onTitleClick
+    onTitleClick: onTitleClick,
+    onDelete: onDelete
   };
   const completedSect = {
     sectionClass: "completed",
     taskArr: completed,
     onChangeCompletion: toggleCompletion,
-    onTitleClick: onTitleClick
+    onTitleClick: onTitleClick,
+    onDelete: onDelete
   };
 
   return (
