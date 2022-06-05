@@ -10,15 +10,14 @@ function loadIndexedDB() {
   const tagObjectStore = transaction.objectStore('tagList'); // B. 태그 리스트 목록 가져오기
   const tagFetchRequest = tagObjectStore.getAll();
 
-  taskFetchRequest.onsuccess = () => { // C-1. DB 내의 Task를 HTML Element로 나타내기
+  taskFetchRequest.onsuccess = () => { // C-1. "Task" ObjectStore 로드 후 작업
     console.time("Configure Task Nodes");
-    console.log(taskFetchRequest.result);
 
     rootRender(taskFetchRequest.result);
     console.timeEnd("Configure Task Nodes");
   };
 
-  /* tagFetchRequest.onsuccess = () => { // C-2. DB 내의 tagList를 태그 목록에 나타내기
+  /* tagFetchRequest.onsuccess = () => { // C-2. "TagList" ObjectStore 로드 후 작업
     const tagList = document.querySelector('.tag-list');
     const tagArray = tagFetchRequest.result.map((el) => el.tag);
 
@@ -45,7 +44,7 @@ dbRequest.onupgradeneeded = () => {
 
 dbRequest.onsuccess = () => {
   db = dbRequest.result;
-  console.log(db);
+
   loadIndexedDB();
 };
 

@@ -36,6 +36,7 @@ function App({ tasks }) {
   const [ongoingArr, setOngoingArr] = useState(tasks.filter(obj => !obj.isCompleted));
   const [completedArr, setCompletedArr] = useState(tasks.filter(obj => obj.isCompleted));
 
+  /*  */
   const showToSide = useCallback((props) => {
     setSide(props);
   }, []); // deps로 side를 지정하지 않는다면?
@@ -113,11 +114,13 @@ function App({ tasks }) {
     });
   }, [ongoingArr, completedArr]);
 
+  /* 4. 할일 만료일 변경 */
   const changeDueDate = useCallback((e, taskId) => {
     const taskObj = findTaskObj(tasks, taskId);
     const { isCompleted } = taskObj;
     const editedTask = { ...taskObj, dueDate: e.target.value }
 
+    accessTaskDB('modify', editedTask);
     if (isCompleted) {
       const nextCompleted = completedArr.map(taskObj =>
         (taskObj.id === taskId) ? editedTask : taskObj
@@ -135,9 +138,9 @@ function App({ tasks }) {
   }, []);
 
   const taskCallbacks = {
-    onTitleClick: showToSide, 
-    onChangeCompletion: toggleCompletion, 
-    onDelete: deleteTask, 
+    onTitleClick: showToSide,
+    onChangeCompletion: toggleCompletion,
+    onDelete: deleteTask,
     onChangeDueDate: changeDueDate,
   };
 
