@@ -9,7 +9,6 @@ function InputField(props) {
 }
 
 const AddNewTask = React.memo(function({title, callbacks}) {
-  console.log(title);
   const {newTitle, newDueDate, addTask} = callbacks;
 
   return (

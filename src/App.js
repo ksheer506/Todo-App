@@ -1,11 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import React from 'react';
+import { useCallback, useMemo, useState, memo } from 'react';
 import { accessTaskDB, accessTagDB } from './modules/db/access.js'
 
-
-import TaskList from "./components/Task.js";
+import { TaskListSection, mappingTasks } from "./components/Task.js";
 import { AddNewTask, AddNewTags } from "./components/AddNewItems.js"
 import SideMenu from "./components/SideMenu.js"
-
 
 class Todo {
   constructor(object) {
@@ -64,7 +63,7 @@ function App({ tasks }) {
     }
   }, [newTask]);
 
-  /* 1. 할일 완료/미완료 여부 변경 */
+  /* 2. 할일 완료/미완료 여부 변경 */
   const toggleCompletion = useCallback((taskObj) => {
     const { isCompleted, id } = taskObj;
     const modifiedTaskObj = { ...taskObj, isCompleted: !taskObj.isCompleted };
@@ -95,36 +94,72 @@ function App({ tasks }) {
     });
   }, [ongoingArr, completedArr]);
 
-  /* 2. 할일 삭제 */
+  /* 3. 할일 삭제 */
   const deleteTask = useCallback((taskId) => {
     const taskObj = findTaskObj(tasks, taskId);
+    const { isCompleted } = taskObj;
 
     accessTaskDB('delete', taskObj);
-    setCompletedArr(prevCompleted => {  // TODO: 할일 배열을 하나로 관리하는 방법?
-      return prevCompleted.filter(taskObj => taskObj.id !== taskId);
-    });
+    if (isCompleted) { // TODO: 할일 배열을 하나로 관리하는 방법?
+      setCompletedArr(prevCompleted => {
+        return prevCompleted.filter(taskObj => taskObj.id !== taskId);
+      });
+
+      return
+    }
+
     setOngoingArr(prevOngoing => {
       return prevOngoing.filter(taskObj => taskObj.id !== taskId);
     });
-
   }, [ongoingArr, completedArr]);
+
+  const changeDueDate = useCallback((e, taskId) => {
+    const taskObj = findTaskObj(tasks, taskId);
+    const { isCompleted } = taskObj;
+    const editedTask = { ...taskObj, dueDate: e.target.value }
+
+    if (isCompleted) {
+      const nextCompleted = completedArr.map(taskObj =>
+        (taskObj.id === taskId) ? editedTask : taskObj
+      );
+      setCompletedArr(nextCompleted);
+
+      return
+    }
+
+    const nextOngoing = ongoingArr.map(taskObj =>
+      (taskObj.id === taskId) ? editedTask : taskObj
+    );
+    setOngoingArr(nextOngoing);
+
+  }, []);
+
+  const taskCallbacks = {
+    onTitleClick: showToSide, 
+    onChangeCompletion: toggleCompletion, 
+    onDelete: deleteTask, 
+    onChangeDueDate: changeDueDate,
+  };
+
 
   return (
     <div className="front">
       <main>
         <AddNewTask {...newTask} callbacks={addTaskCallbacks} />
         <AddNewTags />
-        <TaskList
-          ongoing={ongoingArr}
-          completed={completedArr}
-          toggleCompletion={toggleCompletion}
-          onTitleClick={showToSide}
-          onDelete={deleteTask}
-        />
+        <article className="todo_list">
+          <TaskListSection sectionClass="ongoing">
+            {mappingTasks(ongoingArr, taskCallbacks)}
+          </TaskListSection>
+          <TaskListSection sectionClass="completed">
+            {mappingTasks(completedArr, taskCallbacks)}
+          </TaskListSection>
+        </article>
       </main>
       <SideMenu {...side} />
-    </div>
+    </div >
   );
 }
+
 
 export default App;

@@ -15,5 +15,4 @@ const SideMenu = React.memo(function SideMenu({title, dueDate, text, tags}) {
 });
 
 
-
 export default SideMenu;
