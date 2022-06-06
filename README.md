@@ -1,7 +1,7 @@
 # Todo-App
 Javascript를 이용한 Todo-App입니다.   
 
-[Todo App](https://ksheer506.github.io/todo-app/public/index.html)
+[Open in CodeSandbox](https://4tbgut.csb.app/)
   
 ##
 
