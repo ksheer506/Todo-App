@@ -158,26 +158,7 @@ nav input[type="button"]:nth-child(2) {
 
 
 
-/* 개별 태그 아이콘 */
-.tags {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  cursor: pointer;
-  height: 16px;
-  width: auto;
-  padding-left: 3px;
-  padding-right: 3px;
-  border-radius: 15px;
-  background-color: var(--color-tag-bg);
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
 
-.tags.selected {
-  background-color: rgb(157, 195, 252);
-}
 
 /* cloned 태그 리스트(할일 목록에서) */
 .cloned-tag-list {

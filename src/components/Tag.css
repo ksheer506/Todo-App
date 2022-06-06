@@ -1,0 +1,48 @@
+.tag-list {
+  display: flex;
+  flex-flow: row wrap;
+  column-gap: 3px;
+  row-gap: 2px;
+  margin: 10px 0px 20px 0px;
+}
+
+/* 개별 태그 아이콘 */
+.tags {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  height: 16px;
+  width: auto;
+  padding-left: 3px;
+  padding-right: 3px;
+  border-radius: 15px;
+  background-color: var(--color-tag-bg);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.tags.selected {
+  background-color: rgb(157, 195, 252);
+}
+
+/* 태그 목록에서 태그 삭제 애니메이션 */
+.deleteAnimation > .tags {
+  animation: vibration 0.22s ease 0s 2;
+}
+
+@keyframes vibration {
+  0% {
+    transform: rotate(0deg);
+  }
+  33% {
+    transform: rotate(-5deg);
+  }
+  66% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(5deg);
+  }
+}
