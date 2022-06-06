@@ -10,19 +10,19 @@ function loadIndexedDB() {
   const tagObjectStore = transaction.objectStore('tagList'); // B. 태그 리스트 목록 가져오기
   const tagFetchRequest = tagObjectStore.getAll();
 
-  taskFetchRequest.onsuccess = () => { // C-1. "Task" ObjectStore 로드 후 작업
-    console.time("Configure Task Nodes");
+  const taskReq = new Promise((resolve) => {
+    taskFetchRequest.onsuccess = () => { // C-1. "Task" ObjectStore 로드 후 작업
+      resolve(taskFetchRequest.result)
+    };
+  });
+  const tagReq = new Promise((resolve) => {
+    tagFetchRequest.onsuccess = () => { // C-2. "TagList" ObjectStore 로드 후 작업
+      resolve(tagFetchRequest.result)
+    };
+  });
 
-    rootRender(taskFetchRequest.result);
-    console.timeEnd("Configure Task Nodes");
-  };
-
-  /* tagFetchRequest.onsuccess = () => { // C-2. "TagList" ObjectStore 로드 후 작업
-    const tagList = document.querySelector('.tag-list');
-    const tagArray = tagFetchRequest.result.map((el) => el.tag);
-
-    configureTagNode(tagList, tagArray, { makeCheckbox: true, fetchDB: false });
-  }; */
+  Promise.all([taskReq, tagReq])
+    .then((resArr) => rootRender(...resArr))
 }
 
 /* Task 데이터 저장에 indexedDB 이용 */
@@ -33,7 +33,7 @@ dbRequest.onupgradeneeded = () => {
 
   // "task" Object Store 생성
   const taskObjectStore = db.createObjectStore('task', { keyPath: 'id' });
-  db.createObjectStore('tagList', { keyPath: 'tag' });
+  db.createObjectStore('tagList', { keyPath: 'tagText' });
 
   // Index 생성
   taskObjectStore.createIndex('title', 'title', { unique: false });
@@ -48,6 +48,6 @@ dbRequest.onsuccess = () => {
   loadIndexedDB();
 };
 
-dbRequest.onerror = () => { };
+dbRequest.onerror = () => {};
 
 export { db }; 

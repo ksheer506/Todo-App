@@ -4,25 +4,6 @@ import { accessTaskDB, accessTagDB } from "./modules/db/access.js";
 import { throttle } from "./modules/throttle.js";
 import * as dom from "./modules/dom.js";
 
-class Todo {
-  constructor(object) {
-    this.id = object.id || `id_${Date.now()}`;
-    this.title = object.title;
-    this.isCompleted = object.isCompleted || false;
-    this.dueDate = object.dueDate || '';
-    this.text = object.text || '';
-    this.tags = object.tags || [];
-  }
-
-  toggleCompletion() {
-    this.isCompleted = !this.isCompleted;
-  }
-
-  addNewTag(tag) {
-    this.tags.push(tag);
-  }
-}
-
 /* indexedDB에서 primary key 또는 index를 통해 원하는 Task를 찾는 함수 */
 function findTaskDB(key, value) { // TODO: parameter로 object를 받아 검색할 수 았도록 수정
   const taskObjectStore = db.transaction('task').objectStore('task');
@@ -82,19 +63,6 @@ function createTagKeyArr(tagArray) {
   return tagArray.map((tag) => ({ tag: `#${tag}`, assignedTask: [] }));
 }
 
-/* 새 Task 생성 함수 */
-function addNewTask(taskTitle, _dueDate) {
-  if (!taskTitle) {
-    alert('할 일을 입력해주세요.');
-    return;
-  }
-
-  const newTask = new Todo({ "title": taskTitle, "dueDate": _dueDate });
-  const element = configureTaskNode(newTask);
-
-  moveTaskNode(element, 'ongoing');
-  accessTaskDB('add', newTask); // DB에 할일 추가
-}
 
 /* 해당 위치의 Tag Node를 삭제하는 함수(DB에서도 삭제) */
 // tagArray = ["태그1", "태그2", ...], 모든 태그를 삭제할 경우 할당 x
@@ -160,22 +128,6 @@ async function configureSidePanel(taskId) {  // TODO: 코드 정리, 간략화
   configureTagNode(dom.sdTags, thisTask.tags, { fetchDB: false });
 }
 
-/* Task 추가 이벤트 핸들러 */
-(function () {
-  // 1-1. 새 Task 추가(Enter)
-  dom.newTask.addEventListener('keyup', (e) => {
-    if (e.keyCode === 13) {
-      addNewTask(dom.newTask.value, dom.datePicker.value);
-      dom.newTask.value = ''; // 할일 입력란 지우기
-    }
-  });
-
-  // 1-2. 새 Task 추가(버튼 클릭)
-  dom.addBtn.addEventListener('click', () => {
-    addNewTask(dom.newTask.value, dom.datePicker.value);
-    dom.newTask.value = ''; // 할일 입력란 지우기
-  });
-})();
 
 async function taskEvent(e) {
   const thisTaskNode = e.target.closest('li.task');
@@ -183,16 +135,6 @@ async function taskEvent(e) {
 
   if (!thisTaskNode) return;
 
-  // 2. 완료 및 미완료 Task 체크 할 때: 진행중, 완료 목록으로 이동
-  if (e.target.matches('.task-label [type=checkbox]')) {
-    const thisTaskObj = await findTaskDB('id', taskId);
-
-    thisTaskObj.isCompleted = !thisTaskObj.isCompleted;
-
-    const destNodeClass = thisTaskObj.isCompleted ? 'completed' : 'ongoing';
-    moveTaskNode(thisTaskNode, destNodeClass);
-    accessTaskDB('modify', thisTaskObj);
-  }
 
   // 3. 각 Task에 태그 추가
   if (e.target.matches('.task-tags')) { // TODO: 태그 추가 대신 아이콘으로 대체
@@ -223,47 +165,10 @@ async function taskEvent(e) {
     });
   }
 
-  // 4. Task 삭제
-  if (e.target.matches('.close')) {
-    const thisTaskObj = await findTaskDB('id', taskId);
-
-    thisTaskNode.remove();
-    accessTaskDB('delete', thisTaskObj);
-  }
-
-  // 5. Task 세부 내용 사이드 화면에서 보기
-  if (e.target.matches('.task-label')) {
-    if (document.documentElement.clientWidth <= 600) {
-      sidePanelToggle();
-    }
-
-    const { id } = e.target.closest('.task');
-    configureSidePanel(id);
-  }
 }
 
 
-/* Task 목록 관련 이벤트 핸들러 */
-(function () {
 
-  dom.taskList.addEventListener('click', async (e) => { taskEvent(e) });
-
-  // 6. 만료일 수정
-  dom.taskList.addEventListener('change', async (e) => {
-    const thisTaskNode = e.target.closest('li.task');
-    const taskId = thisTaskNode?.id;
-    const thisDateLabel = thisTaskNode?.querySelector('label.dueDate');
-    const nextDue = e.target.value;
-
-    if (nextDue && e.target.matches('.extra input')) {
-      const thisTaskObj = await findTaskDB('id', taskId);
-
-      thisDateLabel.textContent = nextDue; // 각 Task 목록에 만료일 표시
-      thisTaskObj.dueDate = nextDue;
-      accessTaskDB('modify', thisTaskObj);
-    }
-  });
-})();
 
 async function sideTextSave(e) {
   const [taskId] = dom.sdPanel.id.match(/(?<=\/)id(.*)/);

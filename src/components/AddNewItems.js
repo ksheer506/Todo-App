@@ -8,8 +8,8 @@ function InputField(props) {
   return <input type={type} value={text} id={id} placeholder={placeholder} />;
 }
 
-const AddNewTask = React.memo(function({title, callbacks}) {
-  const {newTitle, newDueDate, addTask} = callbacks;
+const AddNewTask = React.memo(function ({ title, callbacks }) {
+  const { newTitle, newDueDate, addTask } = callbacks;
 
   return (
     <div>
@@ -32,19 +32,22 @@ const AddNewTask = React.memo(function({title, callbacks}) {
   );
 });
 
-const AddNewTags = React.memo(function() {
+const AddNewTags = React.memo(function (props) {
+  const { tagText, callbacks, children } = props;
+
   return (
     <div className="tag-box">
       <div className="tag-conf">
         <p>태그</p>
-        <InputField type="text" id="createTag" placeholder="태그 추가" />
-        <InputField type="button" id="addTag" text="태그 추가" />
-        <InputField type="button" id="deleteTag" text="태그 삭제" />
+        <input type="text" id="createTag" placeholder="ex. 태그1 태그2" value={tagText} onChange={callbacks.newTagName} />
+        <input type="button" id="addTag" value="태그 추가" onClick={callbacks.addTag}/>
+        <input type="button" id="deleteTag" value="태그 삭제" />
       </div>
       <div className="tag-list">
+        {children}
       </div>
     </div>
   );
 });
 
-export {AddNewTask, AddNewTags};
+export { AddNewTask, AddNewTags };

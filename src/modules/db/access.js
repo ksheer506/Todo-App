@@ -2,7 +2,6 @@ import { db } from "./initialLoad.js"
 
 /* "task" ObjectStore 수정 함수 */
 function accessTaskDB(operation, targetTaskObj) {
-  console.log(db);
   if (typeof (targetTaskObj) !== 'object') return;
 
   const transaction = db.transaction(['task'], 'readwrite');
