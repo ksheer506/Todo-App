@@ -8,8 +8,16 @@ function InputField(props) {
   return <input type={type} value={text} id={id} placeholder={placeholder} />;
 }
 
-const AddNewTask = React.memo(function ({ title, callbacks }) {
-  const { newTitle, newDueDate, addTask } = callbacks;
+const AddNewTask = React.memo(function ({ addTask }) {
+  const [newTask, setNewTask] = useState({ title: "", dueDate: null })
+
+  const onEdit = (e, state) => {
+    setNewTask({ ...newTask, [state]: e.target.value });
+  };
+  const onCreate = () => {
+    setNewTask({ title: "", dueDate: null });
+    addTask(newTask);
+  }
 
   return (
     <div>
@@ -23,9 +31,9 @@ const AddNewTask = React.memo(function ({ title, callbacks }) {
         </div>
       </header>
       <div id="add-task">
-        <input type="text" placeholder="할 일을 입력해주세요." value={title} onChange={newTitle} />
-        <input type="date" onChange={newDueDate} />
-        <input type="button" value="추가하기" onClick={addTask} />
+        <input type="text" placeholder="할 일을 입력해주세요." value={newTask.title} onChange={(e) => onEdit(e, "title")} />
+        <input type="date" onChange={(e) => onEdit(e, "dueDate")} />
+        <input type="button" value="추가하기" onClick={onCreate} />
       </div>
     </div>
 
@@ -40,7 +48,7 @@ const AddNewTags = React.memo(function (props) {
       <div className="tag-conf">
         <p>태그</p>
         <input type="text" id="createTag" placeholder="ex. 태그1 태그2" value={tagText} onChange={callbacks.newTagName} />
-        <input type="button" id="addTag" value="태그 추가" onClick={callbacks.addTag}/>
+        <input type="button" id="addTag" value="태그 추가" onClick={callbacks.addTag} />
         <input type="button" id="deleteTag" value="태그 삭제" />
       </div>
       <div className="tag-list">

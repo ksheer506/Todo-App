@@ -35,14 +35,11 @@ function mappingComponent(arr, Comp, extraProps) {
 }
 
 function App({ tasks, tagList }) {
-  const [newTask, setNewTask] = useState({ title: "", dueDate: null });
+  const [currentTask, setCurrentTask] = useState({ action: null, task: {} });
   const [newTag, setNewTag] = useState("");
   const [side, setSide] = useState(null);
   const [tags, setTags] = useState(tagList);
-  const [ongoingArr, setOngoingArr] = useState(tasks.filter(obj => !obj.isCompleted));
-  const [completedArr, setCompletedArr] = useState(tasks.filter(obj => obj.isCompleted));
-
-  console.log(tags);
+  const [taskArr, setTaskArr] = useState(tasks); // TODO:
 
   /* 할일 사이드 메뉴에서 보기 */
   const showToSide = useCallback((props) => {
@@ -50,108 +47,67 @@ function App({ tasks, tagList }) {
   }, []); // deps로 side를 지정하지 않는다면?
 
   /* 1. 새 할일 추가 */
-  const addTaskCallbacks = useCallback({
-    newTitle: (e) => {
-      setNewTask(prevTask => ({ ...prevTask, title: e.target.value }));
-    },
-    newDueDate: (e) => {
-      setNewTask(prevTask => ({ ...prevTask, dueDate: e.target.value }))
-    },
-    addTask: (e) => {
-      if (!newTask.title) {
-        alert('할 일을 입력해주세요.');
-        return;
-      }
-
-      const newTaskInst = new Todo(newTask);
-
-      setOngoingArr(prevOngoing => {
-        const nextOngoing = prevOngoing.slice();
-        nextOngoing.push(newTaskInst);
-
-        return nextOngoing;
-      });
-
-      accessTaskDB("add", newTaskInst);  // DB 변경
-      setNewTask({ title: "", dueDate: null });  // 제목, 만료일 비우기
+  const addTask = useCallback((task) => {  // TODO: Task 관련 이벤트 핸들러가 비슷비슷: useReducer로 하나로 통합?
+    if (!task.title) {
+      alert('할 일을 입력해주세요.');
+      return;
     }
-  }, [newTask]);
+
+    const newTaskInst = new Todo(task);
+
+    setCurrentTask({ action: "ADD", task: newTaskInst });
+    setTaskArr(prev => [...prev, newTaskInst]);
+  }, []);
 
   /* 2. 할일 완료/미완료 여부 변경 */
-  const toggleCompletion = useCallback((taskObj) => {
-    const { isCompleted, id } = taskObj;
-    const modifiedTaskObj = { ...taskObj, isCompleted: !taskObj.isCompleted };
+  const toggleCompletion = useCallback((taskId) => {
+    const taskObj = findObj(taskArr, taskId);
+    const editedTask = { ...taskObj, isCompleted: !taskObj.isCompleted };
 
-    accessTaskDB('modify', modifiedTaskObj);  // DB 수정
-
-    if (!isCompleted) {  // State: ongoingArr, completedArr 변경
-      setOngoingArr(prevOngoing => {
-        return prevOngoing.filter(taskObj => taskObj.id !== id);
-      });
-      setCompletedArr(prevCompleted => {
-        const nextCompleted = prevCompleted.slice();
-        nextCompleted.push(modifiedTaskObj);
-        return nextCompleted;
-      });
-
-      return
-    }
-
-    setCompletedArr(prevCompleted => {
-      return prevCompleted.filter(taskObj => taskObj.id !== id);
+    setCurrentTask({ action: "MODIFY", task: editedTask }); // 어따 쓰나?
+    setTaskArr(prev => {
+      return prev.map((task) => {
+        if (task.id === taskId) {
+          return editedTask;
+        }
+        return task;
+      })
     });
-    setOngoingArr(prevOngoing => {
-      const nextOngoing = prevOngoing.slice();
-      nextOngoing.push(modifiedTaskObj);
-      return nextOngoing;
-    });
-  }, [ongoingArr, completedArr]);
+  }, []);
 
   /* 3. 할일 삭제 */
   const deleteTask = useCallback((taskId) => {
-    const taskObj = findObj(tasks, taskId);
-    const { isCompleted } = taskObj;
+    const taskObj = findObj(taskArr, taskId);
 
-    accessTaskDB('delete', taskObj);
-    if (isCompleted) { // TODO: 할일 배열을 하나로 관리하는 방법?
-      setCompletedArr(prevCompleted => {
-        return prevCompleted.filter(taskObj => taskObj.id !== taskId);
-      });
-
-      return
-    }
-
-    setOngoingArr(prevOngoing => {
-      return prevOngoing.filter(taskObj => taskObj.id !== taskId);
+    setCurrentTask({ action: "DELETE", task: taskObj });
+    setTaskArr(prev => {
+      return prev.filter(task => task.id !== taskId);
     });
-  }, [ongoingArr, completedArr]);
+  }, []);
 
   /* 4. 할일 만료일 변경 */
   const changeDueDate = useCallback((e, taskId) => {
-    /* console.log("이벤트 핸들러에서의 completedArr", completedArr) */
-    const taskObj = findObj(tasks, taskId);
-    const { isCompleted } = taskObj;
-    const editedTask = { ...taskObj, dueDate: e.target.value }
+    const taskObj = findObj(taskArr, taskId);
+    const editedTask = { ...taskObj, dueDate: e.target.value };
 
-    accessTaskDB('modify', editedTask);
+    setCurrentTask({ action: "MODIFY", task: editedTask });
+    setTaskArr(prev => {
+      return prev.map((task) => {
+        if (task.id === taskId) {
+          return editedTask;
+        }
+        return task;
+      })
+    });
+  }, []);
 
-    if (isCompleted) {
-      const nextCompleted = completedArr.map(taskObj =>
-        (taskObj.id === taskId) ? editedTask : taskObj
-      );
-      setCompletedArr(nextCompleted);
+  /* Task DB 업데이트 */
+  useEffect(() => {
+    const { action, task } = currentTask;
+    if (!action) return;
 
-      return
-    }
-
-    const nextOngoing = ongoingArr.map(taskObj =>
-      (taskObj.id === taskId) ? editedTask : taskObj
-    );
-    setOngoingArr(nextOngoing);
-
-  }, [/* ongoingArr, completedArr */]);
-
-  useEffect(() => { console.log("completedArr 변경됨", completedArr); }, [completedArr])
+    accessTaskDB(action, task);
+  }, [currentTask])
 
   const addTagCallbacks = useCallback({
     newTagName: (e) => {
@@ -180,7 +136,7 @@ function App({ tasks, tagList }) {
     accessTagDB('delete', tagObj);
   };
 
-  const filterByTag = () => {};
+  const filterByTag = () => { };
 
 
   const taskCallbacks = {
@@ -195,13 +151,19 @@ function App({ tasks, tagList }) {
     onChecked: filterByTag,
   };
 
-  const ongoingTasks = useMemo(() => mappingComponent(ongoingArr, Task, taskCallbacks), [ongoingArr]);
-  const completedTasks = useMemo(() => mappingComponent(completedArr, Task, taskCallbacks), [completedArr])
+  const ongoingTasks = useMemo(() => {
+    const ongoing = taskArr.filter((task) => task.isCompleted === false);
+    return mappingComponent(ongoing, Task, taskCallbacks)
+  }, [taskArr]);
+  const completedTasks = useMemo(() => {
+    const completed = taskArr.filter((task) => task.isCompleted === true);
+    return mappingComponent(completed, Task, taskCallbacks)
+  }, [taskArr]);
 
   return (
     <div className="front">
       <main>
-        <AddNewTask {...newTask} callbacks={addTaskCallbacks} />
+        <AddNewTask addTask={addTask} />
         <AddNewTags tagText={newTag} callbacks={addTagCallbacks}>
           {mappingComponent(tags, Tag, { makeChk: true })}
         </AddNewTags>

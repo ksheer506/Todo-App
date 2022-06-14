@@ -21,10 +21,10 @@ const Task = React.memo(function (props) {
 
   return (
     <li className="task" id={taskObj.id}>
-      <div className="task-label" onClick={() => { onTitleClick(taskObj) }}>
+      <div className="task-label" onClick={() => { onTitleClick(taskObj) }}>  {/* FIXME: id 쓰도록 */}
         <input
           type="checkbox"
-          onChange={() => onChangeCompletion(taskObj)}
+          onChange={() => onChangeCompletion(taskObj.id)}
           checked={taskObj.isCompleted} />
         {taskObj.title}
       </div>
