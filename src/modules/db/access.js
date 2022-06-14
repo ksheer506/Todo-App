@@ -9,13 +9,13 @@ function accessTaskDB(operation, targetTaskObj) {
   let operationRequest;
 
   switch (operation) {
-    case 'add':
+    case 'ADD':
       operationRequest = taskObjectStore.add(targetTaskObj);
       break;
-    case 'delete':
+    case 'DELETE':
       operationRequest = taskObjectStore.delete(targetTaskObj.id);
       break;
-    case 'modify':
+    case 'MODIFY':
       operationRequest = taskObjectStore.put(targetTaskObj);
       break;
   }
@@ -32,19 +32,19 @@ function accessTagDB(operation, array) { // array = [ {tag: "", assignedTask : [
   let resultLog;
 
   switch (operation) {
-    case 'add':
+    case 'ADD':
       array.forEach((tagObj, index) => {
         operationRequest[index] = tagListObjectStore.add(tagObj);
       });
       resultLog = '성공적으로 태그를 추가했습니다.';
       break;
-    case 'delete':
+    case 'DELETE':
       array.forEach((tagObj, index) => {
         operationRequest[index] = tagListObjectStore.delete(tagObj.tag);
       });
       resultLog = '성공적으로 태그를 제거했습니다.';
       break;
-    case 'modify':
+    case 'MODIFY':
       array.forEach((tagObj, index) => {
         operationRequest[index] = tagListObjectStore.put(tagObj);
       });
