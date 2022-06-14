@@ -2,7 +2,9 @@ import { db } from "./initialLoad.js"
 
 /* "task" ObjectStore 수정 함수 */
 function accessTaskDB(operation, targetTaskObj) {
-  if (typeof (targetTaskObj) !== 'object') return;
+  if (typeof (targetTaskObj) !== 'object') {
+    throw new Error("parameter 2 should be an Object.");
+  };
 
   const transaction = db.transaction(['task'], 'readwrite');
   const taskObjectStore = transaction.objectStore('task');
@@ -18,13 +20,17 @@ function accessTaskDB(operation, targetTaskObj) {
     case 'MODIFY':
       operationRequest = taskObjectStore.put(targetTaskObj);
       break;
+    default:
+      throw new Error("parameter 1 should be one of 'ADD', 'DELETE', and 'MODIFY'");
   }
   operationRequest.onsuccess = () => { };
 }
 
 /* "tagList" ObjectStore 수정 함수 */
 function accessTagDB(operation, array) { // array = [ {tag: "", assignedTask : []}, ... ]
-  if (!Array.isArray(array)) return;
+  if (!Array.isArray(array) || !array[0]?.tag. || !array[0]?.assignedTask) {
+    throw new Error("parameter 2 should be an Array and each element have 'tag: String'and 'assignedTask: Array' properties.");
+  };
 
   const transaction = db.transaction(['tagList'], 'readwrite');
   const tagListObjectStore = transaction.objectStore('tagList');
@@ -50,6 +56,8 @@ function accessTagDB(operation, array) { // array = [ {tag: "", assignedTask : [
       });
       resultLog = '성공적으로 태그를 업데이트했습니다.';
       break;
+    default:
+      throw new Error("parameter 1 should be one of 'ADD', 'DELETE', and 'MODIFY'");
   }
   transaction.onsuccess = () => { console.log(`${resultLog}: "${operationRequest.result}"`); };
   transaction.onerror = (e) => { e.preventDefault(); };
