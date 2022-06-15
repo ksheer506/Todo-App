@@ -5,7 +5,7 @@ const { useState, useEffect, useRef, useCallback } = React;
 const SideMenu = React.memo(function SideMenu({title, dueDate, text, tags}) {
 
   return (
-    <aside>
+    <aside className={title ? "sideshow" : ""}>
       <h2>{title}</h2>
       <div className="dueDate">{dueDate}</div>
       <div className="text">{text}</div>
