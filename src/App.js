@@ -16,14 +16,6 @@ class Todo {
     this.text = object.text || '';
     this.tags = object.tags || [];
   }
-
-  toggleCompletion() {
-    this.isCompleted = !this.isCompleted;
-  }
-
-  addNewTag(tag) {
-    this.tags.push(tag);
-  }
 }
 
 function findObj(data, id) {
@@ -44,7 +36,7 @@ function App({ tasks, tagList }) {
   /* 할일 사이드 메뉴에서 보기 */
   const showToSide = useCallback((props) => {
     setSide(props);
-  }, []); // deps로 side를 지정하지 않는다면?
+  }, []);
 
   /* 1. 새 할일 추가 */
   const addTask = useCallback((task) => {  // TODO: Task 관련 이벤트 핸들러가 비슷비슷: useReducer로 하나로 통합?
@@ -62,6 +54,7 @@ function App({ tasks, tagList }) {
   /* 2. 할일 완료/미완료 여부 변경 */
   const toggleCompletion = useCallback((taskId) => {
     const taskObj = findObj(taskArr, taskId);
+    console.log(taskObj);
     const editedTask = { ...taskObj, isCompleted: !taskObj.isCompleted };
 
     setCurrentTask({ action: "MODIFY", task: editedTask }); // 어따 쓰나?
@@ -73,7 +66,7 @@ function App({ tasks, tagList }) {
         return task;
       })
     });
-  }, []);
+  }, [taskArr]);
 
   /* 3. 할일 삭제 */
   const deleteTask = useCallback((taskId) => {
@@ -83,7 +76,7 @@ function App({ tasks, tagList }) {
     setTaskArr(prev => {
       return prev.filter(task => task.id !== taskId);
     });
-  }, []);
+  }, [taskArr]);
 
   /* 4. 할일 만료일 변경 */
   const changeDueDate = useCallback((e, taskId) => {
@@ -99,7 +92,7 @@ function App({ tasks, tagList }) {
         return task;
       })
     });
-  }, []);
+  }, [taskArr]);
 
   /* Task DB 업데이트 */
   useEffect(() => {
@@ -161,8 +154,8 @@ function App({ tasks, tagList }) {
   }, [taskArr]);
 
   return (
-    <div className="front">
-      <main>
+    <>
+      <main className={side ? "sideshow" : ""}>
         <AddNewTask addTask={addTask} />
         <AddNewTags tagText={newTag} callbacks={addTagCallbacks}>
           {mappingComponent(tags, Tag, { makeChk: true })}
@@ -177,7 +170,7 @@ function App({ tasks, tagList }) {
         </article>
       </main>
       <SideMenu {...side} />
-    </div >
+    </>
   );
 }
 
