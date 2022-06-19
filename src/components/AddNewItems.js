@@ -41,19 +41,23 @@ const AddNewTask = React.memo(function ({ addTask }) {
 });
 
 const AddNewTags = React.memo(function (props) {
-  const { tagText, callbacks, children } = props;
+  const [newTag, setNewTag] = useState("")
+  const { addTags, children } = props;
+
+  const onNewTag = (e) => {
+    addTags(newTag);
+    setNewTag("")
+  };
 
   return (
     <div className="tag-box">
       <div className="tag-conf">
         <p>태그</p>
-        <input type="text" id="createTag" placeholder="ex. 태그1 태그2" value={tagText} onChange={callbacks.newTagName} />
-        <input type="button" id="addTag" value="태그 추가" onClick={callbacks.addTag} />
+        <input type="text" id="createTag" placeholder="ex. 태그1 태그2" value={newTag} onChange={(e) => setNewTag(e.target.value)} />
+        <input type="button" id="addTag" value="태그 추가" onClick={onNewTag} />
         <input type="button" id="deleteTag" value="태그 삭제" />
       </div>
-      <div className="tag-list">
         {children}
-      </div>
     </div>
   );
 });
