@@ -48,6 +48,6 @@ dbRequest.onsuccess = () => {
   loadIndexedDB();
 };
 
-dbRequest.onerror = () => { throw new Error("Failed to load DB")};
+dbRequest.onerror = () => { throw new Error("Failed to load DB") };
 
-export { db }; 
+export { db };
