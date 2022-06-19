@@ -1,4 +1,5 @@
 import React from 'react';
+import './Task.css';
 const { useState, useEffect, useRef, useCallback } = React;
 
 const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }) {
