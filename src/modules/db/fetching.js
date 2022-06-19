@@ -19,7 +19,7 @@ function isTagExistInDB(keyArray) {
     });
   });
   return Promise.all(resultPromises);
-  // DB에 존재: [{"tag": "태그1", "assignedTask": ["id_1", "id_2"]}, ...],
+  // DB에 존재: [{"tagText": "태그1", "assignedTask": ["id_1", "id_2"]}, ...],
   // DB에 없음: null 반환
 }
 

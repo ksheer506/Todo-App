@@ -27,9 +27,9 @@ function accessTaskDB(operation, targetTaskObj) {
 }
 
 /* "tagList" ObjectStore 수정 함수 */
-function accessTagDB(operation, array) { // array = [ {tag: "", assignedTask : []}, ... ]
-  if (!Array.isArray(array) || !array[0]?.tag || !array[0]?.assignedTask) {
-    throw new Error("parameter 2 should be an Array and each element have 'tag: String'and 'assignedTask: Array' properties.");
+function accessTagDB(operation, array) { // array = [ {tagText: "", assignedTask : []}, ... ]
+  if (!Array.isArray(array) || !array[0]?.tagText || !array[0]?.assignedTask) {
+    throw new Error("parameter 2 should be an Array and each element have 'tagText: String' and 'assignedTask: Array' properties.");
   };
 
   const transaction = db.transaction(['tagList'], 'readwrite');
