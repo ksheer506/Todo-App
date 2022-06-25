@@ -3,6 +3,7 @@ import { useEffect, useCallback, useMemo, useState } from 'react';
 import { accessTaskDB, accessTagDB } from './modules/db/access.js';
 import { FilterByTagsDB } from './modules/db/fetching.js'
 
+import './App.css';
 import { TaskListSection, Task } from "./components/Task.js";
 import { AddNewTask, AddNewTags } from "./components/AddNewItems.js"
 import SideMenu from "./components/SideMenu.js"
@@ -29,14 +30,14 @@ function mappingComponent(arr, Component, extraProps) {
 
 function App({ tasks, tagList }) {
   const [currentWork, setCurrentWork] = useState({ action: null, task: {}, tag: {} });
-  const [side, setSide] = useState(null);
+  const [side, setSide] = useState({ status: false });
   const [tags, setTags] = useState(tagList);
   const [selectedTags, setSelectedTags] = useState([]);
   const [taskArr, setTaskArr] = useState(tasks); // TODO:
 
   /* 할일 사이드 메뉴에서 보기 */
   const showToSide = useCallback((props) => {
-    setSide(props);
+    setSide(prev => ({ status: true, ...props }));
   }, []);
 
   /* 1. 새 할일 추가 */
@@ -174,6 +175,7 @@ function App({ tasks, tagList }) {
 
   return (
     <>
+      {side.status ? <div id="background"></div> : null}
       <main className={side ? "sideshow" : ""}>
         <AddNewTask addTask={addTask} />
         <AddNewTags addTags={addTags}>
@@ -190,7 +192,7 @@ function App({ tasks, tagList }) {
           </TaskListSection>
         </article>
       </main>
-      <SideMenu {...side} />
+      <SideMenu {...side} onClick={setSide} />
     </>
   );
 }
