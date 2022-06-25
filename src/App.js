@@ -175,7 +175,7 @@ function App({ tasks, tagList }) {
 
   return (
     <>
-      {side.status ? <div id="background"></div> : null}
+      <div id="background" className={side.status ? "mobile": null}></div>
       <main className={side ? "sideshow" : ""}>
         <AddNewTask addTask={addTask} />
         <AddNewTags addTags={addTags}>
