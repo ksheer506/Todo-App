@@ -177,7 +177,7 @@ function App({ tasks, tagList }) {
       })
     });
 
-    setCurrentWork({ action: "Task/MODIFY", task: editedTask, tag: editedTag });
+    setCurrentWork({ action: "Task/MODIFY", task: editedTask, tag: [editedTag] });
   }
 
   const taskCallbacks = {
