@@ -31,7 +31,7 @@ function mappingComponent(arr, Component, extraProps) {
 function App({ tasks, tagList }) {
   const [currentWork, setCurrentWork] = useState({ action: null, task: {}, tag: {} });
   const [side, setSide] = useState({ status: false });
-  const [tags, setTags] = useState(tagList);
+  const [tagArr, setTagArr] = useState(tagList);
   const [selectedTags, setSelectedTags] = useState([]);
   const [taskArr, setTaskArr] = useState(tasks); // TODO:
 
@@ -102,9 +102,10 @@ function App({ tasks, tagList }) {
 
     const [db, operation] = action.match(/\w{1,10}/g);
 
-    if (db === "Task") {
+    if (task) {
       accessTaskDB(operation, task);
-    } else {
+    }
+    if (tag) {
       accessTagDB(operation, tag);
     }
   }, [currentWork]);
@@ -123,11 +124,11 @@ function App({ tasks, tagList }) {
       ));
 
     setCurrentWork({ action: "Tag/ADD", tag: newTags });
-    setTags((prev) => [...prev, ...newTags])
+    setTagArr((prev) => [...prev, ...newTags])
   }, []);
 
   const deleteTag = (tagText) => {
-    const tagObj = findObj(tags, tagText);
+    const tagObj = findObj(tagArr, tagText);
 
     accessTagDB('delete', tagObj);
   };
@@ -151,6 +152,33 @@ function App({ tasks, tagList }) {
 
   }, [selectedTags])
 
+  /* 사이드 패널에서 태그 추가 */
+  const selectTaskTag = (e, taskId) => {
+    const taskObj = findObj(taskArr, taskId);
+    const tagObj = findObj(tagArr, e.target.value)
+    const { tags } = taskObj;
+    const editedTask = { ...taskObj, tags: tags.concat(e.target.value) };
+    const editedTag = { ...tagObj, assignedTask: tagObj.assignedTask.concat(e.target.value) }
+
+    setTaskArr(prev => {
+      return prev.map((task) => {
+        if (task.id === taskId) {
+          return editedTask;
+        }
+        return task;
+      })
+    });
+    setTagArr(prev => {
+      return prev.map((tag) => {
+        if (tag.id === e.target.value) {
+          return editedTag;
+        }
+        return tag;
+      })
+    });
+
+    setCurrentWork({ action: "Task/MODIFY", task: editedTask, tag: editedTag });
+  }
 
   const taskCallbacks = {
     onTitleClick: showToSide,
@@ -164,6 +192,11 @@ function App({ tasks, tagList }) {
     onFiltering: filterByTag,
   };
 
+  const sideCallbacks = {
+    onClick: setSide,
+    onSelect: selectTaskTag,
+  }
+
   const ongoingTasks = useMemo(() => {
     const ongoing = taskArr.filter((task) => task.isCompleted === false);
     return mappingComponent(ongoing, Task, taskCallbacks)
@@ -175,12 +208,12 @@ function App({ tasks, tagList }) {
 
   return (
     <>
-      <div id="background" className={side.status ? "mobile": null}></div>
+      <div id="background" className={side.status ? "mobile" : null}></div>
       <main className={side ? "sideshow" : ""}>
         <AddNewTask addTask={addTask} />
         <AddNewTags addTags={addTags}>
           <TagList callbacks={tagCallbacks}>
-            {mappingComponent(tags, Tag, { makeChk: true, callbacks: tagCallbacks })}
+            {mappingComponent(tagArr, Tag, { makeChk: true, callbacks: tagCallbacks })}
           </TagList>
         </AddNewTags>
         <article className="todo_list">
@@ -192,7 +225,7 @@ function App({ tasks, tagList }) {
           </TaskListSection>
         </article>
       </main>
-      <SideMenu {...side} onClick={setSide} />
+      <SideMenu {...side} tags={tagArr} callbacks={sideCallbacks} />
     </>
   );
 }

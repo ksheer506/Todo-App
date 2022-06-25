@@ -54,6 +54,27 @@ aside > .text > textarea::placeholder {
   font-size: 0.85rem;
 }
 
+/* 각 할일의 태그 선택하기 */
+.select-tag {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: end;
+  align-items: center;
+  margin: 10px 5px 10px 5px;
+}
+
+.select-tag .new-taskTags {
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.select-tag > select {
+  height: 25px;
+  width: 90px;
+}
+
+/* 각 할일 태그 목록 */
 aside > .tag-list {
   display: flex;
   flex-flow: row wrap;
