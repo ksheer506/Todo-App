@@ -1,5 +1,6 @@
 {
   "name": "todo-app",
+  "homepage": "https://ksheer506.github.io/todo-app/",
   "version": "0.4.0",
   "private": true,
   "dependencies": {
@@ -15,7 +16,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -36,5 +39,8 @@
     ]
   },
   "keywords": [],
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "gh-pages": "^4.0.0"
+  }
 }
