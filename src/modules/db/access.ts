@@ -7,7 +7,7 @@ type operation = "ADD" | "MODIFY" | "DELETE";
 function accessTaskDB(operation: operation, targetTaskObj: taskDB) {
   const transaction = db.transaction(["task"], "readwrite");
   const taskObjectStore = transaction.objectStore("task");
-  let operationRequest: IDBRequest;
+  let operationRequest!: IDBRequest;
 
   switch (operation) {
     case "ADD":
