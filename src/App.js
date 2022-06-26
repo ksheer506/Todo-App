@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useCallback, useMemo, useState } from 'react';
-import { accessTaskDB, accessTagDB } from './modules/db/access.js';
+import { accessTaskDB, accessTagDB } from './modules/db/access';
 import { FilterByTagsDB } from './modules/db/fetching.js'
 
 import './App.css';

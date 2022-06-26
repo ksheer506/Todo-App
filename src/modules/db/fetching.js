@@ -1,4 +1,4 @@
-import { db } from "./initialLoad.js"
+import { db } from "./initialLoad"
 
 /* 태그 배열을 받아 해당 태그가 indexedDB에 존재하는지 검색하고, 그 결과를 반환 */
 // keyArray = [{"tag": "태그1", "assignedTask": ["id_1", "id_2"]}, ...] 또는 ["태그1", "태그2", ...]
