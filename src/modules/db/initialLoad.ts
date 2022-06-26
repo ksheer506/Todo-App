@@ -1,6 +1,7 @@
-import rootRender from '../../index.js'
+import rootRender from '../../index'
+import { taskDB, tagDB } from "../../interfaces";
 
-let db;
+let db: IDBDatabase;
 
 /* IndexedDB에 저장된 데이터를 불러오는 함수 */
 function loadIndexedDB() {
@@ -10,19 +11,22 @@ function loadIndexedDB() {
   const tagObjectStore = transaction.objectStore('tagList'); // B. 태그 리스트 목록 가져오기
   const tagFetchRequest = tagObjectStore.getAll();
 
-  const taskReq = new Promise((resolve) => {
-    taskFetchRequest.onsuccess = () => { // C-1. "Task" ObjectStore 로드 후 작업
-      resolve(taskFetchRequest.result)
+  const taskReq: Promise<Array<taskDB>> = new Promise((resolve) => {
+    taskFetchRequest.onsuccess = () => {
+      // C-1. "Task" ObjectStore 로드 후 작업
+      resolve(taskFetchRequest.result);
     };
   });
-  const tagReq = new Promise((resolve) => {
-    tagFetchRequest.onsuccess = () => { // C-2. "TagList" ObjectStore 로드 후 작업
-      resolve(tagFetchRequest.result)
+  const tagReq: Promise<Array<tagDB>> = new Promise((resolve) => {
+    tagFetchRequest.onsuccess = () => {
+      // C-2. "TagList" ObjectStore 로드 후 작업
+      resolve(tagFetchRequest.result);
     };
   });
 
-  Promise.all([taskReq, tagReq])
-    .then((resArr) => rootRender(...resArr))
+  Promise.all([taskReq, tagReq]).then(
+    (resArr) => rootRender(...resArr)
+  );
 }
 
 /* Task 데이터 저장에 indexedDB 이용 */
