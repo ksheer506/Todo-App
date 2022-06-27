@@ -10,7 +10,7 @@ function Tag(props) {
   const { onDelete, onFiltering } = callbacks;
 
   /* Tag 선택 토글 */
-  const onTagSelected = (e) => {
+  const onTagSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       setSelected(true);
       
@@ -28,7 +28,7 @@ function Tag(props) {
   );
 };
 
-function TagList({ children }) {
+function TagList({ children }: {children: JSX.Element}) {
 
   return (
     <div className="tag-list">
