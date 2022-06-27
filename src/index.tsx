@@ -25,7 +25,9 @@ function loadLocalStorage() {
 } */
 
 function rootRender(tasks: Array<taskDB>, tags: Array<tagDB>) {
-  const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
+  const root = ReactDOM.createRoot(
+    document.getElementById("root") as HTMLElement
+  );
 
   root.render(
     <React.StrictMode>

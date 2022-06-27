@@ -1,13 +1,13 @@
 import React from 'react';
 import { useEffect, useCallback, useMemo, useState } from 'react';
 import { accessTaskDB, accessTagDB } from './modules/db/access';
-import { FilterByTagsDB } from './modules/db/fetching.js'
+import { FilterByTagsDB } from './modules/db/fetching'
 
 import './App.css';
-import { TaskListSection, Task } from "./components/Task.js";
-import { AddNewTask, AddNewTags } from "./components/AddNewItems.js"
-import SideMenu from "./components/SideMenu.js"
-import { Tag, TagList } from "./components/Tag.js"
+import { TaskListSection, Task } from "./components/Task";
+import { AddNewTask, AddNewTags } from "./components/AddNewItems"
+import SideMenu from "./components/SideMenu"
+import { Tag, TagList } from "./components/Tag"
 
 class Todo {
   constructor(object) {
