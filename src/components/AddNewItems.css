@@ -1,7 +1,7 @@
 :root {
   --color-nav-text: rgb(80, 80, 80);
 
-  --img-edit-title: url("./rename_light.png"); /*  */
+  --img-edit-title: url("../img/rename_dark.png"); /*  */
 
   --color-add-button: rgb(250, 98, 93);/*  */
   --color-add-button-hover: rgb(250, 98, 93);/*  */
@@ -15,7 +15,7 @@
   :root {
     --color-nav-text: rgb(216, 216, 216);
 
-    --img-edit-title: url("./rename_light.png");
+    --img-edit-title: url("../img/rename_light.png");
 
     --color-add-button: rgb(179, 97, 94);
     --color-add-button-hover: rgb(184, 78, 74);
@@ -30,7 +30,7 @@
 [dark-theme="true"] {
   --color-nav-text: rgb(216, 216, 216);
 
-  --img-edit-title: url("./rename_dark.png");
+  --img-edit-title: url("../img/rename_light.png");
 
   --color-add-button: rgb(179, 97, 94);
   --color-add-button-hover: rgb(184, 78, 74);
@@ -57,8 +57,8 @@ header > h2#todo-title {
 #edit-title {
   display: inline-block;
   cursor: pointer;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   background: 0% 0%/100% var(--img-edit-title);
 }
 
