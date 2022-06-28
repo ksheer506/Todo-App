@@ -1,5 +1,5 @@
 import rootRender from '../../index'
-import { taskDB, tagDB } from "../../interfaces";
+import { taskDB, tagDB } from "../../interfaces/db";
 
 let db: IDBDatabase;
 

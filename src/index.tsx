@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
-import { taskDB, tagDB } from "./interfaces";
+import { taskDB, tagDB } from "./interfaces/task";
 
 /* localStorage에 저장된 데이터(할일 제목, 다크모드 여부)를 불러오는 함수 */
 function loadLocalStorage() {

@@ -1,5 +1,5 @@
 import { db } from "./initialLoad";
-import { taskDB, tagDB } from "../../interfaces";
+import { taskDB, tagDB } from "../../interfaces/db";
 
 type operation = "ADD" | "MODIFY" | "DELETE";
 
