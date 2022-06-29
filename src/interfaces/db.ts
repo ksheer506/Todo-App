@@ -12,3 +12,7 @@ export interface tagDB {
   tagText: string;
   assignedTask: Array<string>;
 }
+
+export type dbType = ""
+
+export type operation = "ADD" | "MODIFY" | "DELETE";

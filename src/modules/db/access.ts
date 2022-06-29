@@ -1,7 +1,9 @@
 import { db } from "./initialLoad";
-import { taskDB, tagDB } from "../../interfaces/db";
 
-type operation = "ADD" | "MODIFY" | "DELETE";
+import { taskDB, tagDB } from "../../interfaces/db";
+import { operation } from "../../interfaces/db";
+
+
 
 /* "task" ObjectStore 수정 함수 */
 function accessTaskDB(operation: operation, targetTaskObj: taskDB) {
