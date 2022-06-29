@@ -2,16 +2,18 @@ import React from 'react';
 import './AddNewItems.css';
 const { useState, useEffect, useRef, useCallback } = React;
 
-function InputField(props) {
+type taskInput = "title" | "dueDate";
+
+/* function InputField(props) {
   const { type, text, id, placeholder } = props;
 
   return <input type={type} value={text} id={id} placeholder={placeholder} />;
-}
+} */
 
 const AddNewTask = React.memo(function ({ addTask }) {
   const [newTask, setNewTask] = useState({ title: "", dueDate: null })
 
-  const onEdit = (e, state) => {
+  const onEdit = (e: React.ChangeEvent<HTMLInputElement>, state: taskInput) => {
     setNewTask({ ...newTask, [state]: e.target.value });
   };
   const onCreate = () => {
@@ -44,9 +46,9 @@ const AddNewTags = React.memo(function (props) {
   const [newTag, setNewTag] = useState("")
   const { addTags, children } = props;
 
-  const onNewTag = (e) => {
+  const onNewTag = (e: React.MouseEvent<HTMLInputElement>) => {
     addTags(newTag);
-    setNewTag("")
+    setNewTag("");
   };
 
   return (
