@@ -1,5 +1,5 @@
 import React from "react";
-import { TaskType, datePickerT } from "../interfaces/task";
+import { taskType, datePickerT } from "../interfaces/task";
 
 import "./Task.css";
 const { useState, useEffect, useRef, useCallback } = React;
