@@ -13,6 +13,6 @@ export interface tagDB {
   assignedTask: Array<string>;
 }
 
-export type dbType = ""
-
-export type operation = "ADD" | "MODIFY" | "DELETE";
+type dbType = "Task" | "Tag";
+export type operationT = "ADD" | "MODIFY" | "DELETE";
+export type actions = `${dbType}/${operationT}` | ""
