@@ -1,7 +1,6 @@
 import React from "react";
-import { taskType } from "../interfaces/task";
+
 import { sidePanel } from "../interfaces/sidePanel";
-import { tagDB } from "../interfaces/db";
 import "./SideMenu.css";
 
 import Selection from "./Selection";
@@ -13,10 +12,10 @@ const SideMenu = React.memo(function SideMenu({
   title,
   dueDate,
   text,
-  tags,
+  tagDB,
   callbacks,
 }: sidePanel) {
-  const tagList = tags.map((el: tagDB) => (
+  const tagList = tagDB.map((el) => (
     <option value={el.tagText} key={el.id}>
       {el.tagText}
     </option>
@@ -42,7 +41,9 @@ const SideMenu = React.memo(function SideMenu({
       {title ? (
         <Selection
           title="태그 추가"
-          onSelect={(e: React.ChangeEvent<HTMLSelectElement>) => onSelect(e, id)}
+          onSelect={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            onSelect(e, id)
+          }
         >
           <option value=""></option>
           {tagList}
