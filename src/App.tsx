@@ -3,45 +3,47 @@ import { useEffect, useCallback, useMemo, useState } from "react";
 import { accessTaskDB, accessTagDB } from "./modules/db/access";
 import { FilterByTagsDB } from "./modules/db/fetching";
 
-import { taskType } from "./interfaces/task";
-import { taskDB, tagDB } from "./interfaces/db";
-import { sidePanel } from "./interfaces/sidePanel";
+import { taskDB, tagDB, operationT, actions } from "./interfaces/db";
 
 import "./App.css";
 import { TaskListSection, Task } from "./components/Task";
 import { AddNewTask, AddNewTags } from "./components/AddNewItems";
 import SideMenu from "./components/SideMenu";
 import { Tag, TagList } from "./components/Tag";
-import { queryByPlaceholderText } from "@testing-library/react";
 
-class Todo implements taskType {
-  constructor(object: taskType) {
-    this.id = object.id || `id_${Date.now()}`;
+class Todo implements taskDB {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+  dueDate: string;
+  text: string;
+  tags: Array<string>;
+
+  constructor(object: Pick<taskDB, "title" | "dueDate">) {
+    this.id = `id_${Date.now()}`;
     this.title = object.title;
-    this.isCompleted = object.isCompleted || false;
+    this.isCompleted = false;
     this.dueDate = object.dueDate || "";
-    this.text = object.text || "";
-    this.tags = object.tags || [];
+    this.text = "";
+    this.tags = [];
   }
 }
 
-interface objects {}
-
 interface currentWork {
-  action: string;
+  action: actions;
   task?: taskDB;
   tag?: Array<tagDB>;
 }
 
-function findObj(data, id: string) {
-  return data.filter((taskObj) => taskObj.id === id)[0];
+function findObj<T>(data: Array<T>, id: string): T {
+  return data.filter((obj: T) => obj.id === id)[0];
 }
 
-function mappingComponent(
-  arr: Array<{ id: string; [x: string]: any }>,
+function mappingComponent<T>(
+  arr: Array<T>,
   Component: React.FC,
-  extraProps: { [x: string]: any }
-) {
+  extraProps: { [x: string]: unknown }
+): React.ReactNode[] {
   return arr.map((props) => (
     <Component {...props} {...extraProps} key={props.id} />
   ));
@@ -55,18 +57,22 @@ function App({
   tagList: Array<tagDB>;
 }) {
   const [currentWork, setCurrentWork] = useState<currentWork>({ action: "" });
-  const [side, setSide] = useState<{ status: boolean }>({ status: false });
+  const [side, setSide] = useState<{ status: boolean; id: string }>({
+    status: false,
+    id: "",
+  });
   const [tagArr, setTagArr] = useState(tagList);
   const [selectedTags, setSelectedTags] = useState([]);
   const [taskArr, setTaskArr] = useState(tasks); // TODO:
 
   /* 할일 사이드 메뉴에서 보기 */
-  const showToSide = useCallback((props: taskDB) => {
-    setSide({ status: true, ...props });
+  const showToSide = useCallback((taskId: string) => {
+    setSide({ status: true, id: taskId });
   }, []);
+  const sideContent = taskArr.filter((task) => task.id === side.id)[0];
 
   /* 1. 새 할일 추가 */
-  const addTask = useCallback((task) => {
+  const addTask = useCallback((task: Pick<taskDB, "title" | "dueDate">) => {
     // TODO: Task 관련 이벤트 핸들러가 비슷비슷: useReducer로 하나로 통합?
     if (!task.title) {
       alert("할 일을 입력해주세요.");
@@ -135,13 +141,13 @@ function App({
     const { action, task, tag }: currentWork = currentWork;
     if (!action) return;
 
-    const [db, operation] = action.match(/\w{1,10}/g);
+    const [db, operation] = action.match(/\w{1,10}/g) || ["", ""];
 
     if (task) {
-      accessTaskDB(operation, task);
+      accessTaskDB(operation as operationT, task);
     }
     if (tag) {
-      accessTagDB(operation, tag);
+      accessTagDB(operation as operationT, tag);
     }
   }, [currentWork]);
 
@@ -154,9 +160,10 @@ function App({
         assignedTask: [],
       })) || [];
 
-      if (newTags.length < 1) {  // TODO: 모달 등의 컴포넌트 이용하기
-        alert("허용되지 않는 태그입니다.")
-      }
+    if (newTags.length < 1) {
+      // TODO: 모달 등의 컴포넌트 이용하기
+      alert("허용되지 않는 태그입니다.");
+    }
 
     setCurrentWork({ action: "Tag/ADD", tag: newTags });
     setTagArr((prev) => [...prev, ...newTags]);
@@ -165,10 +172,10 @@ function App({
   const deleteTag = (tagText: string) => {
     const tagObj = findObj(tagArr, tagText);
 
-    accessTagDB("DELETE", tagObj);
+    accessTagDB("DELETE", [tagObj]);
   };
 
-  const filterByTag = async (selection) => {
+  /*   const filterByTag = async (selection) => {
     const { isSelected, tag } = selection;
 
     if (!isSelected) {
@@ -178,7 +185,7 @@ function App({
     }
     setSelectedTags((prev) => [...prev, tag]);
     console.log(selectedTags);
-  };
+  }; */
 
   useEffect(() => {
     if (selectedTags.length) {
@@ -187,7 +194,10 @@ function App({
   }, [selectedTags]);
 
   /* 사이드 패널에서 태그 추가 */
-  const selectTaskTag = (e, taskId: string) => {
+  const selectTaskTag = (
+    e: React.ChangeEvent<HTMLOptionElement>,
+    taskId: string
+  ) => {
     const taskObj = findObj(taskArr, taskId);
     const tagObj = findObj(tagArr, e.target.value);
     const { tags } = taskObj;
@@ -230,7 +240,7 @@ function App({
 
   const tagCallbacks = {
     onDelete: deleteTag,
-    onFiltering: filterByTag,
+    /* onFiltering: filterByTag, */
   };
 
   const sideCallbacks = {
@@ -269,7 +279,7 @@ function App({
           </TaskListSection>
         </article>
       </main>
-      <SideMenu {...side} tags={tagArr} callbacks={sideCallbacks} />
+      <SideMenu {...sideContent} tagDB={tagArr} callbacks={sideCallbacks} />
     </>
   );
 }
