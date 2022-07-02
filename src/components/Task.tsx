@@ -1,8 +1,8 @@
 import React from "react";
-import { taskType, datePickerT } from "../interfaces/task";
+import { taskDB } from "../interfaces/db";
+import { datePickerT, taskList } from "../interfaces/task";
 
 import "./Task.css";
-const { useState, useEffect, useRef, useCallback } = React;
 
 interface callbackT {
 
@@ -27,7 +27,7 @@ const MemoDatePicker = React.memo(function DatePicker({
   );
 });
 
-const Task = React.memo(function (props) {
+const Task = React.memo(function (props: taskDB) {
   const {
     onTitleClick,
     onChangeCompletion,
@@ -44,20 +44,18 @@ const Task = React.memo(function (props) {
 
   return (
     <li className="task" id={taskObj.id}>
-      <div
-        className="task-label"
-        onClick={() => {
-          onTitleClick(taskObj);
-        }}
-      >
-        {" "}
+      <div className="task-label">
         {/* FIXME: id 쓰도록 */}
         <input
           type="checkbox"
           onChange={() => onChangeCompletion(taskObj.id)}
           checked={taskObj.isCompleted}
         />
+        <span className="task-title" onClick={() => {
+          onTitleClick(taskObj.id);
+        }}>
         {taskObj.title}
+        </span>
       </div>
       <div className="task-tags"></div>
       <div className="extra">
@@ -75,7 +73,8 @@ const Task = React.memo(function (props) {
   );
 });
 
-const TaskListSection = React.memo(function ({ sectionClass, children }) {
+
+const TaskListSection = React.memo(function ({ sectionClass, children }: taskList) {
   const sectionName = sectionClass === "ongoing" ? "진행중" : "완료";
 
   return (
