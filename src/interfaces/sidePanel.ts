@@ -1,7 +1,7 @@
-import { tagDB } from "./db";
+import { taskDB, tagDB } from "./db";
 import { taskType } from "./task";
 
-export interface sidePanel extends taskType {
+export interface sidePanel extends taskDB {
   status: boolean;
   tagDB: Array<tagDB>;
 }
