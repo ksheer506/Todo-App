@@ -4,7 +4,6 @@ import { sidePanel } from "../interfaces/sidePanel";
 import "./SideMenu.css";
 
 import Selection from "./Selection";
-const { useState, useEffect, useRef, useCallback } = React;
 
 const SideMenu = React.memo(function SideMenu({
   id,
@@ -15,12 +14,14 @@ const SideMenu = React.memo(function SideMenu({
   tagDB,
   callbacks,
 }: sidePanel) {
+  const { onClick, onSelect } = callbacks;
+
   const tagList = tagDB.map((el) => (
     <option value={el.tagText} key={el.id}>
       {el.tagText}
     </option>
   ));
-  const { onClick, onSelect } = callbacks;
+  
 
   return (
     <aside className={status ? "sideshow" : ""}>
