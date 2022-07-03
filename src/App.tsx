@@ -3,7 +3,7 @@ import { useEffect, useCallback, useMemo, useState } from "react";
 import { accessTaskDB, accessTagDB } from "./modules/db/access";
 import { FilterByTagsDB } from "./modules/db/fetching";
 
-import { taskDB, tagDB, operationT, actions } from "./interfaces/db";
+import { taskDB, tagDB, operationT, actions, editableField } from "./interfaces/db";
 
 import "./App.css";
 import { TaskListSection, Task } from "./components/Task";
@@ -35,7 +35,7 @@ interface currentWork {
   tag?: Array<tagDB>;
 }
 
-function findObj<T>(data: Array<T>, id: string): T {
+function findObj<T>(data: Array<T>, id: string) {
   return data.filter((obj: T) => obj.id === id)[0];
 }
 
@@ -43,19 +43,11 @@ function mappingComponent<T>(
   arr: Array<T>,
   Component: React.FC,
   extraProps: { [x: string]: unknown }
-): React.ReactNode[] {
-  return arr.map((props) => (
-    <Component {...props} {...extraProps} key={props.id} />
-  ));
+): React.ReactElement[] {
+  return arr.map((props) => <Component {...props} {...extraProps} key={props.id} />);
 }
 
-function App({
-  tasks,
-  tagList,
-}: {
-  tasks: Array<taskDB>;
-  tagList: Array<tagDB>;
-}) {
+function App({ tasks, tagList }: { tasks: Array<taskDB>; tagList: Array<tagDB> }) {
   const [currentWork, setCurrentWork] = useState<currentWork>({ action: "" });
   const [side, setSide] = useState<{ status: boolean; id: string }>({
     status: false,
@@ -69,7 +61,7 @@ function App({
   const showToSide = useCallback((taskId: string) => {
     setSide({ status: true, id: taskId });
   }, []);
-  const sideContent = taskArr.filter((task) => task.id === side.id)[0];
+  const sideContent = { ...side, ...taskArr.filter((task) => task.id === side.id)[0] };
 
   /* 1. 새 할일 추가 */
   const addTask = useCallback((task: Pick<taskDB, "title" | "dueDate">) => {
@@ -85,13 +77,13 @@ function App({
     setTaskArr((prev) => [...prev, newTaskInst]);
   }, []);
 
-  /* 2. 할일 완료/미완료 여부 변경 */
-  const toggleCompletion = useCallback(
-    (taskId: string) => {
+  /* 할일 변경(dueDate, isCompleted, text) */
+  const onEditTask = useCallback(
+    (taskId: string, { field, newValue }: { field: editableField; newValue: string | boolean }) => {
       const taskObj = findObj(taskArr, taskId);
-      const editedTask = { ...taskObj, isCompleted: !taskObj.isCompleted };
+      const editedTask = { ...taskObj, [field]: newValue };
 
-      setCurrentWork({ action: "Task/MODIFY", task: editedTask }); // 어따 쓰나?
+      setCurrentWork({ action: "Task/MODIFY", task: editedTask });
       setTaskArr((prev) => {
         return prev.map((task) => {
           if (task.id === taskId) {
@@ -117,25 +109,7 @@ function App({
     [taskArr]
   );
 
-  /* 4. 할일 만료일 변경 */
-  const changeDueDate = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, taskId: string) => {
-      const taskObj = findObj(taskArr, taskId);
-      const editedTask = { ...taskObj, dueDate: e.target.value };
-
-      setCurrentWork({ action: "Task/MODIFY", task: editedTask });
-      setTaskArr((prev) => {
-        return prev.map((task) => {
-          if (task.id === taskId) {
-            return editedTask;
-          }
-          return task;
-        });
-      });
-    },
-    [taskArr]
-  );
-
+ 
   /* DB 업데이트 */
   useEffect(() => {
     const { action, task, tag }: currentWork = currentWork;
@@ -164,6 +138,7 @@ function App({
       // TODO: 모달 등의 컴포넌트 이용하기
       alert("허용되지 않는 태그입니다.");
     }
+    // TODO: 이미 존재하는 태그 걸러내기
 
     setCurrentWork({ action: "Tag/ADD", tag: newTags });
     setTagArr((prev) => [...prev, ...newTags]);
@@ -172,7 +147,10 @@ function App({
   const deleteTag = (tagText: string) => {
     const tagObj = findObj(tagArr, tagText);
 
-    accessTagDB("DELETE", [tagObj]);
+    setCurrentWork({ action: "Tag/DELETE", tag: [tagObj] });
+    setTagArr((prev) => {
+      return prev.filter((tag) => tag.id !== tagText);
+    });
   };
 
   /*   const filterByTag = async (selection) => {
@@ -194,27 +172,15 @@ function App({
   }, [selectedTags]);
 
   /* 사이드 패널에서 태그 추가 */
-  const selectTaskTag = (
-    e: React.ChangeEvent<HTMLOptionElement>,
-    taskId: string
-  ) => {
-    const taskObj = findObj(taskArr, taskId);
+  const selectTaskTag = (e: React.ChangeEvent<HTMLOptionElement>, taskId: string) => {
+    if (!e.target.value) return;
+
     const tagObj = findObj(tagArr, e.target.value);
-    const { tags } = taskObj;
-    const editedTask = { ...taskObj, tags: tags.concat(e.target.value) };
     const editedTag = {
       ...tagObj,
-      assignedTask: tagObj.assignedTask.concat(e.target.value),
+      assignedTask: tagObj.assignedTask.concat(taskId),
     };
 
-    setTaskArr((prev) => {
-      return prev.map((task) => {
-        if (task.id === taskId) {
-          return editedTask;
-        }
-        return task;
-      });
-    });
     setTagArr((prev) => {
       return prev.map((tag) => {
         if (tag.id === e.target.value) {
@@ -224,18 +190,13 @@ function App({
       });
     });
 
-    setCurrentWork({
-      action: "Task/MODIFY",
-      task: editedTask,
-      tag: [editedTag],
-    });
+    setCurrentWork({ action: "Tag/MODIFY", tag: [editedTag] });
   };
 
   const taskCallbacks = {
     onTitleClick: showToSide,
-    onChangeCompletion: toggleCompletion,
     onDelete: deleteTask,
-    onChangeDueDate: changeDueDate,
+    onEditTask,
   };
 
   const tagCallbacks = {
@@ -245,7 +206,8 @@ function App({
 
   const sideCallbacks = {
     onClick: setSide,
-    onSelect: selectTaskTag,
+    onSelectTag: selectTaskTag,
+    onEditTask,
   };
 
   const ongoingTasks = useMemo(() => {
@@ -259,7 +221,11 @@ function App({
 
   return (
     <>
-      <div id="background" className={side.status ? "mobile" : ""}></div>
+      <div
+        id="background"
+        className={side.status ? "mobile" : ""}
+        onClick={() => setSide({ status: false, id: "" })}
+      ></div>
       <main className={side ? "sideshow" : ""}>
         <AddNewTask addTask={addTask} />
         <AddNewTags addTags={addTags}>
@@ -271,12 +237,8 @@ function App({
           </TagList>
         </AddNewTags>
         <article className="todo_list">
-          <TaskListSection sectionClass="ongoing">
-            {ongoingTasks}
-          </TaskListSection>
-          <TaskListSection sectionClass="completed">
-            {completedTasks}
-          </TaskListSection>
+          <TaskListSection sectionClass="ongoing">{ongoingTasks}</TaskListSection>
+          <TaskListSection sectionClass="completed">{completedTasks}</TaskListSection>
         </article>
       </main>
       <SideMenu {...sideContent} tagDB={tagArr} callbacks={sideCallbacks} />
