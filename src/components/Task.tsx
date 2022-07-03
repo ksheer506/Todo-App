@@ -4,41 +4,22 @@ import { datePickerT, taskList } from "../interfaces/task";
 
 import "./Task.css";
 
-interface callbackT {
+interface callbackT {}
 
-}
-
-
-
-const MemoDatePicker = React.memo(function DatePicker({
-  id,
-  dueDate,
-  onChange,
-}: datePickerT) {
+const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }: datePickerT) {
   return (
     <label className="dueDate" htmlFor={`datepicker ${id}`}>
-      <input
-        type="date"
-        id={`datepicker ${id}`}
-        onChange={(e) => onChange(e, id)}
-      />
+      <input type="date" id={`datepicker ${id}`} onChange={(e) => onChange(e, id)} />
       {dueDate}
     </label>
   );
 });
 
 const Task = React.memo(function (props: taskDB) {
-  const {
-    onTitleClick,
-    onChangeCompletion,
-    onDelete,
-    onChangeDueDate,
-    ...taskObj
-  } = props;
+  const { onTitleClick, onEditTask, onDelete, ...taskObj } = props;
 
   const propsDueDate = {
     id: taskObj.id,
-    onChange: onChangeDueDate,
     dueDate: taskObj.dueDate,
   };
 
@@ -48,18 +29,24 @@ const Task = React.memo(function (props: taskDB) {
         {/* FIXME: id 쓰도록 */}
         <input
           type="checkbox"
-          onChange={() => onChangeCompletion(taskObj.id)}
+          onChange={() => onEditTask(taskObj.id, { field: "isCompleted", newValue: !taskObj.isCompleted })}
           checked={taskObj.isCompleted}
         />
-        <span className="task-title" onClick={() => {
-          onTitleClick(taskObj.id);
-        }}>
-        {taskObj.title}
+        <span
+          className="task-title"
+          onClick={() => {
+            onTitleClick(taskObj.id);
+          }}
+        >
+          {taskObj.title}
         </span>
       </div>
       <div className="task-tags"></div>
       <div className="extra">
-        <MemoDatePicker {...propsDueDate} />
+        <MemoDatePicker
+          {...propsDueDate}
+          onChange={(e) => onEditTask(taskObj.id, { field: "dueDate", newValue: e.target.value })}
+        />
         <div
           className="close"
           onClick={() => {
@@ -72,7 +59,6 @@ const Task = React.memo(function (props: taskDB) {
     </li>
   );
 });
-
 
 const TaskListSection = React.memo(function ({ sectionClass, children }: taskList) {
   const sectionName = sectionClass === "ongoing" ? "진행중" : "완료";
