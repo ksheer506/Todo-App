@@ -76,6 +76,7 @@ aside > .text > textarea::placeholder {
 .select-tag > select {
   height: 25px;
   width: 90px;
+  background-color: var(--color-nav-bg);
 }
 
 /* 각 할일 태그 목록 */
