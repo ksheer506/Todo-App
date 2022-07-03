@@ -3,7 +3,6 @@ export interface taskDB {
   title: string;
   dueDate: string;
   isCompleted: boolean;
-  tags: Array<string>;
   text: string;
 }
 
