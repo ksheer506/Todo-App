@@ -2,7 +2,13 @@ import React from "react";
 import "./Tag.css";
 const { useState, useEffect, useRef, useCallback } = React;
 
-function Tag(props) {
+interface TagPropsType {
+  tagText: string, 
+  makeChk: boolean,
+  callbacks?: any
+}
+
+function Tag(props: TagPropsType) {
   const [selected, setSelected] = useState(false);
   const { tagText, makeChk, callbacks } = props;
   const { onDelete, onFiltering } = callbacks || {};
