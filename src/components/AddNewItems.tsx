@@ -1,23 +1,27 @@
 import React from "react";
+import { taskDB } from "../interfaces/db";
 import "./AddNewItems.css";
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState } = React;
 
 type taskInput = "title" | "dueDate";
 
-/* function InputField(props) {
-  const { type, text, id, placeholder } = props;
+interface addNewTaskProps {
+  addTask: (arg: Pick<taskDB, "title" | "dueDate">) => void
+}
 
-  return <input type={type} value={text} id={id} placeholder={placeholder} />;
-} */
+interface addNewTagProps {
+  addTags: (arg: string) => void,
+  children: JSX.Element
+}
 
-const AddNewTask = React.memo(function ({ addTask }) {
-  const [newTask, setNewTask] = useState({ title: "", dueDate: null });
+const AddNewTask = React.memo(function ({ addTask }: addNewTaskProps) {
+  const [newTask, setNewTask] = useState({ title: "", dueDate: "" });
 
   const onEdit = (e: React.ChangeEvent<HTMLInputElement>, state: taskInput) => {
     setNewTask({ ...newTask, [state]: e.target.value });
   };
   const onCreate = () => {
-    setNewTask({ title: "", dueDate: null });
+    setNewTask({ title: "", dueDate: "" });
     addTask(newTask);
   };
 
@@ -46,8 +50,8 @@ const AddNewTask = React.memo(function ({ addTask }) {
   );
 });
 
-const AddNewTags = React.memo(function (props) {
-  const [newTag, setNewTag] = useState("");
+const AddNewTags = React.memo(function (props: addNewTagProps) {
+  const [newTag, setNewTag] = useState<string>("");
   const { addTags, children } = props;
 
   const onNewTag = () => {
@@ -58,7 +62,7 @@ const AddNewTags = React.memo(function (props) {
     if (e.key === "Enter") {
       onNewTag();
     }
-  }
+  };
 
   return (
     <div className="tag-box">
