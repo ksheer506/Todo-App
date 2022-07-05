@@ -1,4 +1,4 @@
-export interface taskDB {
+export interface TaskDB {
   id: string;
   title: string;
   dueDate: string;
@@ -6,7 +6,7 @@ export interface taskDB {
   text: string;
 }
 
-export interface tagDB {
+export interface TagDB {
   id: string;
   tagText: string;
   assignedTask: Array<string>;

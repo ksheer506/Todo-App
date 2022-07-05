@@ -1,15 +1,15 @@
 import { ChangeEvent } from "react";
-import { taskDB, tagDB } from "./db";
-import { editableField } from "./task";
+import { TaskDB, TagDB } from "./db";
+import { EditedTask } from "./task";
 
-interface callbacks {
+interface Callbacks {
   onClick: (arg: { status: boolean; id: string }) => void;
   onSelectTag: (e: ChangeEvent<HTMLSelectElement>, id: string) => void;
-  onEditTask: (taskId: string, { field, newValue }: { field: editableField | null; newValue: string | boolean }) => void
+  onEditTask: (taskId: string, { field, newValue }: EditedTask) => void;
 }
 
-export interface sidePanel extends taskDB {
+export interface SidePanel extends TaskDB {
   status: boolean,
-  tagDB: Array<tagDB>,
-  callbacks: callbacks
+  tagDB: Array<TagDB>,
+  callbacks: Callbacks
 }
