@@ -6,7 +6,7 @@ Javascript를 이용한 Todo-App입니다.
 [Open in CodeSandbox](https://4tbgut.csb.app/)
   
 ##
-### v0.4.3 (2022. 7. 5.)
+### v0.5.1 (2022. 7. 5.)
 1. 사이드 패널에서 할일 텍스트 수정
 2. 태그 추가 및 삭제
 
