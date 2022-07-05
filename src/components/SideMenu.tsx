@@ -7,6 +7,9 @@ import { Tag } from "./Tag";
 import Selection from "./Selection";
 import { editableField } from "../interfaces/task";
 
+interface tag {
+
+}
 
 
 const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text, tagDB, callbacks }: sidePanel) {
@@ -46,9 +49,7 @@ const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text
       <div>
         <span
           className="close"
-          onClick={() => {
-            onClick((prev: { status: boolean; id: string }) => ({ ...prev, status: false }));
-          }}
+          onClick={() => {onClick({ status: false, id: "" })}}
         >
           x
         </span>
