@@ -1,12 +1,12 @@
 import React from "react";
-import { taskDB } from "../interfaces/db";
+import { TaskDB } from "../interfaces/db";
 import "./AddNewItems.css";
 const { useState } = React;
 
 type taskInput = "title" | "dueDate";
 
 interface addNewTaskProps {
-  addTask: (arg: Pick<taskDB, "title" | "dueDate">) => void
+  addTask: (arg: Pick<TaskDB, "title" | "dueDate">) => void
 }
 
 interface addNewTagProps {

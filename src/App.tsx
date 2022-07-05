@@ -3,7 +3,8 @@ import { useEffect, useCallback, useMemo, useState } from "react";
 import { accessTaskDB, accessTagDB } from "./modules/db/access";
 import { FilterByTagsDB } from "./modules/db/fetching";
 
-import { taskDB, tagDB, operationT, actions, editableField } from "./interfaces/db";
+import { TaskDB, TagDB, operationT, actions } from "./interfaces/db";
+import { EditedTask } from "./interfaces/task";
 
 import "./App.css";
 import { TaskListSection, Task } from "./components/Task";
@@ -11,7 +12,7 @@ import { AddNewTask, AddNewTags } from "./components/AddNewItems";
 import SideMenu from "./components/SideMenu";
 import { Tag, TagList } from "./components/Tag";
 
-class Todo implements taskDB {
+class Todo {
   id: string;
   title: string;
   isCompleted: boolean;
@@ -19,7 +20,7 @@ class Todo implements taskDB {
   text: string;
   tags: Array<string>;
 
-  constructor(object: Pick<taskDB, "title" | "dueDate">) {
+  constructor(object: Pick<TaskDB, "title" | "dueDate">) {
     this.id = `id_${Date.now()}`;
     this.title = object.title;
     this.isCompleted = false;
@@ -31,23 +32,23 @@ class Todo implements taskDB {
 
 interface currentWork {
   action: actions;
-  task?: taskDB;
-  tag?: Array<tagDB>;
+  task?: TaskDB;
+  tag?: Array<TagDB>;
 }
 
 function findObj<T>(data: Array<T>, id: string) {
-  return data.filter((obj: T) => obj.id === id)[0];
+  return data.filter((obj) => obj.id === id)[0];
 }
 
 function mappingComponent<T>(
   arr: Array<T>,
-  Component: React.FC,
+  Component: React.FC<T>,
   extraProps: { [x: string]: unknown }
-): React.ReactElement[] {
+) {
   return arr.map((props) => <Component {...props} {...extraProps} key={props.id} />);
 }
 
-function App({ tasks, tagList }: { tasks: Array<taskDB>; tagList: Array<tagDB> }) {
+function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }) {
   const [currentWork, setCurrentWork] = useState<currentWork>({ action: "" });
   const [side, setSide] = useState<{ status: boolean; id: string }>({
     status: false,
@@ -64,7 +65,7 @@ function App({ tasks, tagList }: { tasks: Array<taskDB>; tagList: Array<tagDB> }
   const sideContent = { ...side, ...taskArr.filter((task) => task.id === side.id)[0] };
 
   /* 1. 새 할일 추가 */
-  const addTask = useCallback((task: Pick<taskDB, "title" | "dueDate">) => {
+  const addTask = useCallback((task: Pick<TaskDB, "title" | "dueDate">) => {
     // TODO: Task 관련 이벤트 핸들러가 비슷비슷: useReducer로 하나로 통합?
     if (!task.title) {
       alert("할 일을 입력해주세요.");
@@ -79,7 +80,9 @@ function App({ tasks, tagList }: { tasks: Array<taskDB>; tagList: Array<tagDB> }
 
   /* 할일 변경(dueDate, isCompleted, text) */
   const onEditTask = useCallback(
-    (taskId: string, { field, newValue }: { field: editableField; newValue: string | boolean }) => {
+    (taskId: string, { field, newValue }: EditedTask) => {
+      if (!field) return;
+
       const taskObj = findObj(taskArr, taskId);
       const editedTask = { ...taskObj, [field]: newValue };
 
@@ -109,7 +112,6 @@ function App({ tasks, tagList }: { tasks: Array<taskDB>; tagList: Array<tagDB> }
     [taskArr]
   );
 
- 
   /* DB 업데이트 */
   useEffect(() => {
     const { action, task, tag }: currentWork = currentWork;
@@ -172,7 +174,7 @@ function App({ tasks, tagList }: { tasks: Array<taskDB>; tagList: Array<tagDB> }
   }, [selectedTags]);
 
   /* 사이드 패널에서 태그 추가 */
-  const selectTaskTag = (e: React.ChangeEvent<HTMLOptionElement>, taskId: string) => {
+  const selectTaskTag = (e: React.ChangeEvent<HTMLSelectElement>, taskId: string) => {
     if (!e.target.value) return;
 
     const tagObj = findObj(tagArr, e.target.value);

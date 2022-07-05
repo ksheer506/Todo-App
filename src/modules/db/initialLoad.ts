@@ -1,5 +1,5 @@
 import rootRender from '../../index'
-import { taskDB, tagDB } from "../../interfaces/db";
+import { TaskDB, TagDB } from "../../interfaces/db";
 
 let db: IDBDatabase;
 
@@ -11,13 +11,13 @@ function loadIndexedDB() {
   const tagObjectStore = transaction.objectStore('tagList'); // B. 태그 리스트 목록 가져오기
   const tagFetchRequest = tagObjectStore.getAll();
 
-  const taskReq: Promise<Array<taskDB>> = new Promise((resolve) => {
+  const taskReq: Promise<Array<TaskDB>> = new Promise((resolve) => {
     taskFetchRequest.onsuccess = () => {
       // C-1. "Task" ObjectStore 로드 후 작업
       resolve(taskFetchRequest.result);
     };
   });
-  const tagReq: Promise<Array<tagDB>> = new Promise((resolve) => {
+  const tagReq: Promise<Array<TagDB>> = new Promise((resolve) => {
     tagFetchRequest.onsuccess = () => {
       // C-2. "TagList" ObjectStore 로드 후 작업
       resolve(tagFetchRequest.result);
