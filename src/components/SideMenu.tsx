@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { sidePanel } from "../interfaces/sidePanel";
+import { SidePanel } from "../interfaces/sidePanel";
 
 import "./SideMenu.css";
 import { Tag } from "./Tag";
 import Selection from "./Selection";
-import { editableField } from "../interfaces/task";
+import { EditedTask } from "../interfaces/task";
 
 interface tag {
 
 }
 
 
-const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text, tagDB, callbacks }: sidePanel) {
+const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text, tagDB, callbacks }: SidePanel) {
   const { onClick, onSelectTag, onEditTask } = callbacks;
-  const [onEdit, setOnEdit] = useState<{ field: editableField | null; newValue: string }>({ field: null, newValue: "" });
+  const [onEdit, setOnEdit] = useState<EditedTask>({ field: null, newValue: "" });
   const editField = useRef(null);
 
   const tagList = tagDB.map((el) => (

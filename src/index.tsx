@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
-import { taskDB, tagDB } from "./interfaces/db";
+import { TaskDB, TagDB } from "./interfaces/db";
 
 /* localStorage에 저장된 데이터(할일 제목, 다크모드 여부)를 불러오는 함수 */
 function loadLocalStorage() {
@@ -24,7 +24,7 @@ function loadLocalStorage() {
   localStorage.setItem("dark-mode", checked);
 } */
 
-function rootRender(tasks: Array<taskDB>, tags: Array<tagDB>) {
+function rootRender(tasks: Array<TaskDB>, tags: Array<TagDB>) {
   const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
   );
