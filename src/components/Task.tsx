@@ -1,12 +1,16 @@
-import React from "react";
-import { taskDB } from "../interfaces/db";
-import { datePickerT, taskList } from "../interfaces/task";
+import React, { ChangeEvent } from "react";
+import { TaskDB } from "../interfaces/db";
+import { DatePickerType, EditedTask, TaskList } from "../interfaces/task";
 
 import "./Task.css";
 
-interface callbackT {}
+interface TaskPropsType extends TaskDB {
+  onTitleClick: (arg0: string) => void,
+  onEditTask: (arg0: string, arg1: EditedTask) => void,
+  onDelete: (arg0: string) => void
+}
 
-const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }: datePickerT) {
+const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }: DatePickerType) {
   return (
     <label className="dueDate" htmlFor={`datepicker ${id}`}>
       <input type="date" id={`datepicker ${id}`} onChange={(e) => onChange(e, id)} />
@@ -15,7 +19,7 @@ const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }:
   );
 });
 
-const Task = React.memo(function (props: taskDB) {
+const Task = React.memo(function (props: TaskPropsType) {
   const { onTitleClick, onEditTask, onDelete, ...taskObj } = props;
 
   const propsDueDate = {
@@ -60,7 +64,7 @@ const Task = React.memo(function (props: taskDB) {
   );
 });
 
-const TaskListSection = React.memo(function ({ sectionClass, children }: taskList) {
+const TaskListSection = React.memo(function ({ sectionClass, children }: TaskList) {
   const sectionName = sectionClass === "ongoing" ? "진행중" : "완료";
 
   return (
