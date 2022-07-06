@@ -1,13 +1,15 @@
-export interface TaskDB {
-  id: string;
+export interface Identified {
+  id: string
+}
+
+export interface TaskDB extends Identified {
   title: string;
   dueDate: string;
   isCompleted: boolean;
   text: string;
 }
 
-export interface TagDB {
-  id: string;
+export interface TagDB extends Identified {
   tagText: string;
   assignedTask: Array<string>;
 }

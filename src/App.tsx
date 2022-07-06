@@ -3,7 +3,7 @@ import { useEffect, useCallback, useMemo, useState } from "react";
 import { accessTaskDB, accessTagDB } from "./modules/db/access";
 import { FilterByTagsDB } from "./modules/db/fetching";
 
-import { TaskDB, TagDB, operationT, actions } from "./interfaces/db";
+import { TaskDB, TagDB, operationT, actions, Identified } from "./interfaces/db";
 import { EditedTask } from "./interfaces/task";
 
 import "./App.css";
@@ -11,6 +11,15 @@ import { TaskListSection, Task } from "./components/Task";
 import { AddNewTask, AddNewTags } from "./components/AddNewItems";
 import SideMenu from "./components/SideMenu";
 import { Tag, TagList } from "./components/Tag";
+
+interface Test extends Identified {
+  prop: number;
+}
+
+let test: Test = {
+  id: "32",
+  prop: 22,
+};
 
 class Todo {
   id: string;
@@ -36,16 +45,20 @@ interface currentWork {
   tag?: Array<TagDB>;
 }
 
-function findObj<T>(data: Array<T>, id: string) {
+function findObj<T extends Identified>(data: Array<T>, id: string): T {
   return data.filter((obj) => obj.id === id)[0];
 }
 
-function mappingComponent<T>(
+function mappingComponent<T extends Identified, S>(
   arr: Array<T>,
-  Component: React.FC<T>,
-  extraProps: { [x: string]: unknown }
-) {
-  return arr.map((props) => <Component {...props} {...extraProps} key={props.id} />);
+  Component: React.FC<T & S>,
+  extraProps: S
+): React.ReactElement[] {
+  return arr.map((props) => {
+    const componentProps = { ...props, ...extraProps, key: props.id };
+
+    return <Component {...componentProps} />;
+  });
 }
 
 function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }) {
@@ -54,9 +67,9 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
     status: false,
     id: "",
   });
-  const [tagArr, setTagArr] = useState(tagList);
+  const [tagArr, setTagArr] = useState<Array<TagDB>>(tagList);
   const [selectedTags, setSelectedTags] = useState([]);
-  const [taskArr, setTaskArr] = useState(tasks); // TODO:
+  const [taskArr, setTaskArr] = useState<Array<TaskDB>>(tasks); // TODO:
 
   /* 할일 사이드 메뉴에서 보기 */
   const showToSide = useCallback((taskId: string) => {
@@ -167,11 +180,11 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
     console.log(selectedTags);
   }; */
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (selectedTags.length) {
       console.log(FilterByTagsDB(selectedTags));
     }
-  }, [selectedTags]);
+  }, [selectedTags]); */
 
   /* 사이드 패널에서 태그 추가 */
   const selectTaskTag = (e: React.ChangeEvent<HTMLSelectElement>, taskId: string) => {
@@ -221,6 +234,8 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
     return mappingComponent(completed, Task, taskCallbacks);
   }, [taskArr]);
 
+  const tags = mappingComponent(tagArr, Tag, { makeChk: true, callbacks: tagCallbacks });
+
   return (
     <>
       <div
@@ -232,10 +247,7 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
         <AddNewTask addTask={addTask} />
         <AddNewTags addTags={addTags}>
           <TagList callbacks={tagCallbacks}>
-            {mappingComponent(tagArr, Tag, {
-              makeChk: true,
-              callbacks: tagCallbacks,
-            })}
+            {mappingComponent(tagArr, Tag, { makeChk: true, callbacks: tagCallbacks })}
           </TagList>
         </AddNewTags>
         <article className="todo_list">
