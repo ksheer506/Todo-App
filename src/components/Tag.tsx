@@ -32,7 +32,7 @@ function Tag(props: TagPropsType) {
   );
 }
 
-function TagList({ children }: { children: JSX.Element }) {
+function TagList({ children }: { children: React.ReactElement[] }) {
   return <div className="tag-list">{children}</div>;
 }
 
