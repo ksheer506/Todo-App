@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import { SidePanel } from "../interfaces/sidePanel";
+import { EditedTask } from "../interfaces/task";
 
-import "./SideMenu.css";
 import { Tag } from "./Tag";
 import Selection from "./Selection";
-import { EditedTask } from "../interfaces/task";
+
+import "./SideMenu.css";
 
 
 const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text, tagDB, callbacks }: SidePanel) {

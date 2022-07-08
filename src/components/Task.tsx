@@ -1,14 +1,10 @@
-import React, { ChangeEvent } from "react";
-import { TaskDB } from "../interfaces/db";
-import { DatePickerType, EditedTask, TaskList } from "../interfaces/task";
+import React from "react";
+
+import { DatePickerType, TaskList } from "../interfaces/task";
+import { TaskPropsType } from "../interfaces/task";
 
 import "./Task.css";
 
-interface TaskPropsType extends TaskDB {
-  onTitleClick: (arg0: string) => void,
-  onEditTask: (arg0: string, arg1: EditedTask) => void,
-  onDelete: (arg0: string) => void
-}
 
 const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }: DatePickerType) {
   return (

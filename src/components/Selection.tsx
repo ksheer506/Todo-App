@@ -1,20 +1,17 @@
 import React from "react";
 
-interface SelectionPropsType {
-  title: string,
-  children: React.ReactElement[],
-  onSelect: (e: React.ChangeEvent<HTMLSelectElement>) => void
-}
+import { SelectionPropsType } from "../interfaces/sidePanel";
+
 
 const Selection = ({ title, children, onSelect }: SelectionPropsType) => {
 
   return (
-    <div className='select-tag'>
+    <label className='select-tag'>
       <span className='new-taskTags'>{title}</span>
       <select onChange={onSelect}>
         {children}
       </select>
-    </div>
+    </label>
   );
 }
 
