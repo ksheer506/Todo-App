@@ -1,25 +1,20 @@
 import React from "react";
 import { useEffect, useCallback, useMemo, useState } from "react";
+
 import { accessTaskDB, accessTagDB } from "./modules/db/access";
 import { FilterByTagsDB } from "./modules/db/fetching";
 
-import { TaskDB, TagDB, operationT, actions, Identified } from "./interfaces/db";
+import { TaskDB, TagDB, operationT, Identified, CurrentWork } from "./interfaces/db";
 import { EditedTask } from "./interfaces/task";
 
-import "./App.css";
 import { TaskListSection, Task } from "./components/Task";
 import { AddNewTask, AddNewTags } from "./components/AddNewItems";
 import SideMenu from "./components/SideMenu";
 import { Tag, TagList } from "./components/Tag";
+import Nav from "./components/Nav";
 
-interface Test extends Identified {
-  prop: number;
-}
+import "./App.css";
 
-let test: Test = {
-  id: "32",
-  prop: 22,
-};
 
 class Todo {
   id: string;
@@ -39,11 +34,6 @@ class Todo {
   }
 }
 
-interface currentWork {
-  action: actions;
-  task?: TaskDB;
-  tag?: Array<TagDB>;
-}
 
 function findObj<T extends Identified>(data: Array<T>, id: string): T {
   return data.filter((obj) => obj.id === id)[0];
@@ -62,7 +52,7 @@ function mappingComponent<T extends Identified, S>(
 }
 
 function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }) {
-  const [currentWork, setCurrentWork] = useState<currentWork>({ action: "" });
+  const [currentWork, setCurrentWork] = useState<CurrentWork>({ action: "" });
   const [side, setSide] = useState<{ status: boolean; id: string }>({
     status: false,
     id: "",
@@ -127,7 +117,7 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
 
   /* DB 업데이트 */
   useEffect(() => {
-    const { action, task, tag }: currentWork = currentWork;
+    const { action, task, tag }: CurrentWork = currentWork;
     if (!action) return;
 
     const [db, operation] = action.match(/\w{1,10}/g) || ["", ""];
@@ -168,7 +158,7 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
     });
   };
 
-  /*   const filterByTag = async (selection) => {
+    /* const filterByTag = async (selection) => {
     const { isSelected, tag } = selection;
 
     if (!isSelected) {
@@ -180,11 +170,12 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
     console.log(selectedTags);
   }; */
 
-  /*   useEffect(() => {
+    /* useEffect(() => {
     if (selectedTags.length) {
       console.log(FilterByTagsDB(selectedTags));
     }
   }, [selectedTags]); */
+
 
   /* 사이드 패널에서 태그 추가 */
   const selectTaskTag = (e: React.ChangeEvent<HTMLSelectElement>, taskId: string) => {
@@ -238,6 +229,16 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
 
   return (
     <>
+      <Nav />
+      <header>
+        <h2 id="todo-title">할 일 목록</h2>
+        <button id="edit-title" aria-label="앱 제목 변경"></button>
+        <div className="toggle-dark">
+          <p>다크 모드</p>
+          <input type="checkbox" id="default" />
+          <label className="switch" htmlFor="default" />
+        </div>
+      </header>
       <div
         id="background"
         className={side.status ? "mobile" : ""}
@@ -246,9 +247,7 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
       <main className={side ? "sideshow" : ""}>
         <AddNewTask addTask={addTask} />
         <AddNewTags addTags={addTags}>
-          <TagList callbacks={tagCallbacks}>
-            {mappingComponent(tagArr, Tag, { makeChk: true, callbacks: tagCallbacks })}
-          </TagList>
+          <TagList>{tags}</TagList>
         </AddNewTags>
         <article className="todo_list">
           <TaskListSection sectionClass="ongoing">{ongoingTasks}</TaskListSection>
