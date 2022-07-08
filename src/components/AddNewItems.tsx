@@ -26,27 +26,17 @@ const AddNewTask = React.memo(function ({ addTask }: addNewTaskProps) {
   };
 
   return (
-    <div>
-      <header>
-        <h2 id="todo-title">할 일 목록</h2>
-        <div id="edit-title"></div>
-        <div className="toggle-dark">
-          <p>다크 모드</p>
-          <input type="checkbox" id="default" />
-          <label className="switch" htmlFor="default" />
-        </div>
-      </header>
       <div id="add-task">
         <input
           type="text"
           placeholder="할 일을 입력해주세요."
+          aria-label="새 할일 제목 입력"
           value={newTask.title}
           onChange={(e) => onEdit(e, "title")}
         />
-        <input type="date" onChange={(e) => onEdit(e, "dueDate")} />
+        <input type="date" aria-label="새 할일 만료일 입력" onChange={(e) => onEdit(e, "dueDate")} />
         <input type="button" value="추가하기" onClick={onCreate} />
       </div>
-    </div>
   );
 });
 
