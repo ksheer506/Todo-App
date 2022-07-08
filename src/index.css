@@ -1,4 +1,6 @@
-body > iframe { display: none }  /* FIXME: 삭제 예정 */
+body > iframe {
+  display: none;
+} /* FIXME: 삭제 예정 */
 
 :root {
   --color-body: rgb(255, 255, 255);
@@ -10,7 +12,7 @@ body > iframe { display: none }  /* FIXME: 삭제 예정 */
 
   --color-input-bg: rgb(255, 255, 255);
 
-  --color-ongoing-title: rgb(238, 111, 26);
+  --color-ongoing-title: rgb(168, 76, 15);
   --color-ongoing-bg: rgb(252, 228, 198);
   --color-ongoing-hover: rgb(255, 235, 213);
   --color-completed-title: rgb(126, 126, 126);
@@ -20,7 +22,7 @@ body > iframe { display: none }  /* FIXME: 삭제 예정 */
 
   --color-add-button: rgb(250, 98, 93);
   --color-add-button-hover: rgb(250, 98, 93);
-  --color-tag-button: rgb(109, 152, 245);
+  --color-tag-button: #6d98f5;
   --color-button-bg: rgb(255, 255, 255);
   --color-button-text: rgb(255, 255, 255);
 
@@ -40,7 +42,7 @@ body > iframe { display: none }  /* FIXME: 삭제 예정 */
 
     --color-input-bg: rgb(94, 94, 114);
 
-    --color-ongoing-title: rgb(184, 79, 9);
+    --color-ongoing-title: rgb(168, 76, 15);
     --color-ongoing-bg: rgb(202, 180, 153);
     --color-ongoing-hover: rgb(216, 195, 169);
     --color-completed-title: rgb(31, 31, 31);
@@ -115,7 +117,11 @@ input {
   overflow-y: scroll;
   display: grid;
   grid-template-columns: 1fr 270px;
-  grid-template-rows: 35px 80%;
+  grid-template-rows: 35px 80px 80%;
+  grid-template-areas:
+    "nav    nav"
+    "header side"
+    "main   side";
   height: 85vh;
   column-gap: 10px;
   row-gap: 10px;
@@ -146,4 +152,13 @@ input {
 
 .task-tags > .tags {
   left: 0%;
+}
+
+@media (max-width: 600px) {
+  #root {
+    grid-template-areas:
+      "nav    nav"
+      "header side"
+      "main   side";
+  }
 }
