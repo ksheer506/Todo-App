@@ -7,20 +7,16 @@ import { Tag } from "./Tag";
 import Selection from "./Selection";
 import { EditedTask } from "../interfaces/task";
 
-interface tag {
-
-}
-
 
 const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text, tagDB, callbacks }: SidePanel) {
   const { onClick, onSelectTag, onEditTask } = callbacks;
   const [onEdit, setOnEdit] = useState<EditedTask>({ field: null, newValue: "" });
   const editField = useRef(null);
 
-  const tagList = tagDB.map((el) => (
-    <option value={el.tagText} key={el.id}>
-      {el.tagText}
-    </option>
+  const tagList: React.ReactElement[] = tagDB.map((el) => (
+      <option value={el.tagText} key={el.id}>
+        {el.tagText}
+      </option>
   ));
 
   /* 해당 Task가 가진 Tag */
@@ -37,8 +33,9 @@ const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text
   };
 
   useEffect(() => {
-    if (onEdit.field === "text") {
+    if (id && onEdit.field === "text") {
       const textArea = editField.current! as HTMLTextAreaElement;
+
       textArea.focus();
       textArea.setSelectionRange(text.length, text.length);
     }
@@ -47,17 +44,20 @@ const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text
   return (
     <aside className={status ? "sideshow" : ""}>
       <div>
-        <span
+        <button
           className="close"
-          onClick={() => {onClick({ status: false, id: "" })}}
+          aria-label="사이드 패널 닫기"
+          onClick={() => {
+            onClick({ status: false, id: "" });
+          }}
         >
           x
-        </span>
+        </button>
       </div>
       <h2>{title}</h2>
 
       <div className="dueDate">{dueDate}</div>
-      {onEdit.field ? (
+      {id && onEdit.field ? (
         <div className="text" onBlur={onEditCompleted}>
           <textarea
             ref={editField}
@@ -74,7 +74,7 @@ const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text
       {title ? (
         <Selection title="태그 추가" onSelect={(e: React.ChangeEvent<HTMLSelectElement>) => onSelectTag(e, id)}>
           <option value=""></option>
-          {tagList}
+          <>{tagList}</>
         </Selection>
       ) : null}
       <div className="tag-list">
