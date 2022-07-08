@@ -3,19 +3,27 @@ export interface Identified {
 }
 
 export interface TaskDB extends Identified {
-  title: string;
-  dueDate: string;
-  isCompleted: boolean;
-  text: string;
+  title: string,
+  dueDate: string,
+  isCompleted: boolean,
+  text: string
 }
 
 export interface TagDB extends Identified {
-  tagText: string;
-  assignedTask: Array<string>;
+  tagText: string,
+  assignedTask: Array<string>
 }
 
 type dbType = "Task" | "Tag";
 export type operationT = "ADD" | "MODIFY" | "DELETE";
 export type actions = `${dbType}/${operationT}` | ""
+
+export interface CurrentWork {
+  action: actions;
+  task?: TaskDB;
+  tag?: Array<TagDB>;
+}
+
+
 
 
