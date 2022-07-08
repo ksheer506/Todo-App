@@ -12,8 +12,8 @@ interface TaskPropsType extends TaskDB {
 
 const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }: DatePickerType) {
   return (
-    <label className="dueDate" htmlFor={`datepicker ${id}`}>
-      <input type="date" id={`datepicker ${id}`} onChange={(e) => onChange(e, id)} />
+    <label className="dueDate">
+      <input type="date" onChange={(e) => onChange(e, id)} />
       {dueDate}
     </label>
   );
@@ -30,7 +30,6 @@ const Task = React.memo(function (props: TaskPropsType) {
   return (
     <li className="task" id={taskObj.id}>
       <div className="task-label">
-        {/* FIXME: id 쓰도록 */}
         <input
           type="checkbox"
           onChange={() => onEditTask(taskObj.id, { field: "isCompleted", newValue: !taskObj.isCompleted })}
@@ -51,14 +50,13 @@ const Task = React.memo(function (props: TaskPropsType) {
           {...propsDueDate}
           onChange={(e) => onEditTask(taskObj.id, { field: "dueDate", newValue: e.target.value })}
         />
-        <div
+        <button
           className="close"
+          aria-label="할일 삭제"
           onClick={() => {
             onDelete(taskObj.id);
           }}
-        >
-          x
-        </div>
+        >x</button>
       </div>
     </li>
   );
@@ -69,7 +67,7 @@ const TaskListSection = React.memo(function ({ sectionClass, children }: TaskLis
 
   return (
     <ul className={sectionClass}>
-      <input type="checkbox" className="toggle-collapse" />
+      <input type="checkbox" aria-label={`${sectionName} 목록 접기`} className="toggle-collapse" />
       <div className="toggle-icon"></div>
       <header>
         <h3>{sectionName}</h3>
