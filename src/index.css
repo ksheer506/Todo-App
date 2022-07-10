@@ -100,12 +100,9 @@ body > iframe {
 
 html,
 body {
-  width: min(100vw - 10px, 810px);
-  height: 80vh;
-  /* overflow-x: hidden; */
-  margin-right: 0px;
-  padding-right: 10px;
-  /* overflow-y: hidden; */
+  width: min(100vw, 810px);
+  height: 100vh;
+  margin: 0;
 }
 
 input {
@@ -117,16 +114,16 @@ input {
   overflow-y: scroll;
   display: grid;
   grid-template-columns: 1fr 270px;
-  grid-template-rows: 35px 80px 80%;
+  grid-template-rows: 35px 80px 75%;
   grid-template-areas:
     "nav    nav"
     "header side"
     "main   side";
-  height: 85vh;
+  height: 95vh;
   column-gap: 10px;
   row-gap: 10px;
-  margin-top: 10px;
-  padding-right: 7px;
+  padding-left: 8px;
+  padding-right: 10px;
   overflow-x: hidden;
 }
 
