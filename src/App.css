@@ -100,8 +100,6 @@ header > h2#todo-title {
 }
 
 main {
-  width: calc(100% + 30px);
-  padding-right: 18px;
   grid-area: main;
   overflow-y: scroll;
 }
@@ -121,8 +119,6 @@ main {
 
   main {
     grid-area: main/main/main/side;
-    width: calc(100% + 30px);
-    padding-right: 16px;
     overflow-y: scroll;
   }
 
@@ -139,24 +135,3 @@ main {
     transition: 0.6s all;
   }
 }
-
-/* @media (max-width: 600px) {
-   #background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100%;
-    pointer-events: none;
-    background-color: black;
-    opacity: 0;
-    z-index: 1;
-    transition: 0.6s opacity;
-  }
-
-  #background.sideshow {
-    opacity: 0.4;
-    pointer-events: all;
-    transition: 0.6s opacity;
-  }
-} */
