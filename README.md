@@ -3,7 +3,7 @@ Javascript를 이용한 Todo-App입니다.
 
 [Demo](https://ksheer506.github.io/todo-app/index.html) (2022. 6. 26. 빌드)
 
-[Open in CodeSandbox](https://4tbgut.csb.app/)
+[Open in CodeSandbox](https://5jcjo3.csb.app/)
   
 ##
 ### v0.5.1 (2022. 7. 5.)
