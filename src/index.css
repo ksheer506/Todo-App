@@ -103,6 +103,7 @@ body {
   width: min(100vw, 810px);
   height: 100vh;
   margin: 0;
+  overflow-x: hidden;
 }
 
 input {
@@ -119,11 +120,12 @@ input {
     "nav    nav"
     "header side"
     "main   side";
+  width: calc(100% + 22px);
   height: 95vh;
   column-gap: 10px;
   row-gap: 10px;
   padding-left: 8px;
-  padding-right: 10px;
+  padding-right: 15px;
   overflow-x: hidden;
 }
 
@@ -157,5 +159,6 @@ input {
       "nav    nav"
       "header side"
       "main   side";
+    padding-right: 15px;
   }
 }

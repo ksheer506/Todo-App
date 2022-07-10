@@ -100,7 +100,10 @@ header > h2#todo-title {
 }
 
 main {
+  width: calc(100% + 30px);
+  padding-right: 18px;
   grid-area: main;
+  overflow-y: scroll;
 }
 
 #background {
@@ -118,10 +121,13 @@ main {
 
   main {
     grid-area: main/main/main/side;
+    width: calc(100% + 30px);
+    padding-right: 16px;
+    overflow-y: scroll;
   }
 
   main.sideshow {
-    overflow-y: hidden;
+    overflow-y: scroll;
   }
 
   #background.mobile {

@@ -4,7 +4,7 @@ aside {
   display: flex;
   position: relative;
   flex-flow: column;
-  height: 95%;
+  height: 102%;
   background-color: var(--color-nav-bg);
   padding: 5px 5px 0px 5px;
   border-radius: 7px;
