@@ -1,10 +1,9 @@
 import React from "react";
 
-import { DatePickerType, TaskList } from "../interfaces/task";
+import { DatePickerType } from "../interfaces/task";
 import { TaskPropsType } from "../interfaces/task";
 
 import "./Task.css";
-
 
 const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }: DatePickerType) {
   return (
@@ -52,25 +51,14 @@ const Task = React.memo(function (props: TaskPropsType) {
           onClick={() => {
             onDelete(taskObj.id);
           }}
-        >x</button>
+        >
+          x
+        </button>
       </div>
     </li>
   );
 });
 
-const TaskListSection = React.memo(function ({ sectionClass, children }: TaskList) {
-  const sectionName = sectionClass === "ongoing" ? "진행중" : "완료";
 
-  return (
-    <ul className={sectionClass}>
-      <input type="checkbox" aria-label={`${sectionName} 목록 접기`} className="toggle-collapse" />
-      <div className="toggle-icon"></div>
-      <header>
-        <h3>{sectionName}</h3>
-      </header>
-      {children}
-    </ul>
-  );
-});
 
-export { TaskListSection, Task };
+export { Task };
