@@ -53,6 +53,7 @@
   "description": "",
   "devDependencies": {
     "@types/react": "^18.0.14",
+    "@types/styled-components": "^5.1.25",
     "gh-pages": "^4.0.0"
   }
 }
