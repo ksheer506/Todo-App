@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App";
 import { TaskDB, TagDB } from "./interfaces/db";
 
+
 /* localStorage에 저장된 데이터(할일 제목, 다크모드 여부)를 불러오는 함수 */
 function loadLocalStorage() {
   const userTitle = localStorage.getItem("title") || "할 일 목록";
@@ -24,16 +25,12 @@ function loadLocalStorage() {
   localStorage.setItem("dark-mode", checked);
 } */
 
-function rootRender(tasks: Array<TaskDB>, tags: Array<TagDB>) {
   const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
   );
 
   root.render(
     <React.StrictMode>
-      <App tasks={tasks} tagList={tags} />
+        <App />
     </React.StrictMode>
   );
-}
-
-export default rootRender;

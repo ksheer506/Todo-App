@@ -7,14 +7,16 @@ import { FilterByTagsDB } from "./modules/db/fetching";
 import { TaskDB, TagDB, operationT, Identified, CurrentWork } from "./interfaces/db";
 import { EditedTask } from "./interfaces/task";
 
-import { TaskListSection, Task } from "./components/Task";
+import { Task } from "./components/Task";
+import SectionPanel from "./components/SectionPanel";
+import { TaskListContainer, TaskListSection } from "./components/TaskList";
 import { AddNewTask, AddNewTags } from "./components/AddNewItems";
 import SideMenu from "./components/SideMenu";
 import { Tag, TagList } from "./components/Tag";
 import Nav from "./components/Nav";
 
 import "./App.css";
-
+import { loadIndexedDB } from "./modules/db/initialLoad";
 
 class Todo {
   id: string;
@@ -34,12 +36,11 @@ class Todo {
   }
 }
 
-
 function findObj<T extends Identified>(data: Array<T>, id: string): T {
   return data.filter((obj) => obj.id === id)[0];
 }
 
-function mappingComponent<T extends Identified, S>(
+export function mappingComponent<T extends Identified, S>(
   arr: Array<T>,
   Component: React.FC<T & S>,
   extraProps: S
@@ -51,15 +52,23 @@ function mappingComponent<T extends Identified, S>(
   });
 }
 
-function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }) {
+function App() {
   const [currentWork, setCurrentWork] = useState<CurrentWork>({ action: "" });
   const [side, setSide] = useState<{ status: boolean; id: string }>({
     status: false,
     id: "",
   });
-  const [tagArr, setTagArr] = useState<Array<TagDB>>(tagList);
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [taskArr, setTaskArr] = useState<Array<TaskDB>>(tasks); // TODO:
+  const [tagArr, setTagArr] = useState<Array<TagDB>>([]);
+  const [selectedTags, setSelectedTags] = useState<Array<string>>([]);
+  const [taskArr, setTaskArr] = useState<Array<TaskDB>>([]); 
+
+  useEffect(() => {
+    (async () => {
+      const [tasks, tags] = await loadIndexedDB()
+      setTaskArr(tasks);
+      setTagArr(tags);
+    })();
+  }, []);
 
   /* 할일 사이드 메뉴에서 보기 */
   const showToSide = useCallback((taskId: string) => {
@@ -89,6 +98,7 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
       const taskObj = findObj(taskArr, taskId);
       const editedTask = { ...taskObj, [field]: newValue };
 
+      console.log(editedTask);
       setCurrentWork({ action: "Task/MODIFY", task: editedTask });
       setTaskArr((prev) => {
         return prev.map((task) => {
@@ -158,24 +168,24 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
     });
   };
 
-    /* const filterByTag = async (selection) => {
-    const { isSelected, tag } = selection;
-
+  const filterByTag = (isSelected: boolean, tagText: string) => {
     if (!isSelected) {
       setSelectedTags((prev) => {
-        return prev.filter((el) => el !== tag);
+        return prev.filter((el) => el !== tagText);
       });
-    }
-    setSelectedTags((prev) => [...prev, tag]);
-    console.log(selectedTags);
-  }; */
 
-    /* useEffect(() => {
-    if (selectedTags.length) {
-      console.log(FilterByTagsDB(selectedTags));
+      return;
     }
-  }, [selectedTags]); */
+    setSelectedTags((prev) => [...prev, tagText]);
+  };
 
+  useEffect(() => {
+    (async () => {
+      if (selectedTags.length) {
+        await FilterByTagsDB(selectedTags);
+      }
+    })();
+  }, [selectedTags]);
 
   /* 사이드 패널에서 태그 추가 */
   const selectTaskTag = (e: React.ChangeEvent<HTMLSelectElement>, taskId: string) => {
@@ -207,7 +217,7 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
 
   const tagCallbacks = {
     onDelete: deleteTag,
-    /* onFiltering: filterByTag, */
+    onFiltering: filterByTag,
   };
 
   const sideCallbacks = {
@@ -216,15 +226,9 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
     onEditTask,
   };
 
-  const ongoingTasks = useMemo(() => {
-    const ongoing = taskArr.filter((task) => task.isCompleted === false);
-    return mappingComponent(ongoing, Task, taskCallbacks);
-  }, [taskArr]);
-  const completedTasks = useMemo(() => {
-    const completed = taskArr.filter((task) => task.isCompleted === true);
-    return mappingComponent(completed, Task, taskCallbacks);
-  }, [taskArr]);
 
+  const ongoing = taskArr.filter((task) => task.isCompleted === false);
+  const completed = taskArr.filter((task) => task.isCompleted === true);
   const tags = mappingComponent(tagArr, Tag, { makeChk: true, callbacks: tagCallbacks });
 
   return (
@@ -249,9 +253,9 @@ function App({ tasks, tagList }: { tasks: Array<TaskDB>; tagList: Array<TagDB> }
         <AddNewTags addTags={addTags}>
           <TagList>{tags}</TagList>
         </AddNewTags>
+        <SectionPanel />
         <article className="todo_list">
-          <TaskListSection sectionClass="ongoing">{ongoingTasks}</TaskListSection>
-          <TaskListSection sectionClass="completed">{completedTasks}</TaskListSection>
+          <TaskListContainer sections={[""]} taskArr={taskArr} taskCallbacks={taskCallbacks} />
         </article>
       </main>
       <SideMenu {...sideContent} tagDB={tagArr} callbacks={sideCallbacks} />
