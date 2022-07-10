@@ -1,4 +1,3 @@
-import rootRender from '../../index'
 import { TaskDB, TagDB } from "../../interfaces/db";
 
 let db: IDBDatabase;
@@ -24,9 +23,7 @@ function loadIndexedDB() {
     };
   });
 
-  Promise.all([taskReq, tagReq]).then(
-    (resArr) => rootRender(...resArr)
-  );
+  return Promise.all([taskReq, tagReq])
 }
 
 /* Task 데이터 저장에 indexedDB 이용 */
@@ -54,4 +51,4 @@ dbRequest.onsuccess = () => {
 
 dbRequest.onerror = () => { throw new Error("Failed to load DB") };
 
-export { db };
+export { db, loadIndexedDB };
