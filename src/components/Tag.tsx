@@ -1,6 +1,6 @@
 import React from "react";
 import "./Tag.css";
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState } = React;
 
 interface TagPropsType {
   tagText: string, 
@@ -16,7 +16,7 @@ function Tag(props: TagPropsType) {
   /* Tag 선택 토글 */
   const onTagSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelected(!!e.target.checked);
-    onFiltering({ isSelected: e.target.checked, tag: tagText });
+    onFiltering(e.target.checked, tagText);
   };
 
   return (

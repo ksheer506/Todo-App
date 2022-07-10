@@ -62,7 +62,7 @@ const SideMenu = React.memo(function SideMenu({ id, status, title, dueDate, text
         <div className="text" onBlur={onEditCompleted}>
           <textarea
             ref={editField}
-            value={onEdit.newValue || text}
+            value={onEdit.newValue.toString() || text}
             onChange={(e) => setOnEdit({ ...onEdit, newValue: e.target.value })}
           />
         </div>
