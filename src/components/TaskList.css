@@ -1,0 +1,100 @@
+/* ----------------------------------------------------- */
+.todo_list section {
+  position: relative;
+  border-radius: 4px;
+}
+
+.todo_list section header {
+  padding-left: 3px;
+  padding-top: 5px;
+}
+
+/* 진행중 section */
+.ongoing {
+  background-color: var(--color-ongoing-bg);
+}
+
+/* 진행중 제목 */
+.ongoing h3 {
+  color: var(--color-ongoing-title);
+}
+
+.ongoing:hover {
+  background-color: var(--color-ongoing-hover);
+}
+
+/* 완료 section */
+.completed {
+  background-color: var(--color-completed-bg);
+}
+
+/* 완료 제목 */
+.completed h3 {
+  color: var(--color-completed-title);
+}
+
+.completed .task-title {
+  color: var(--color-completed-text);
+  text-decoration: var(--color-completed-text) line-through;
+}
+
+.completed:hover {
+  background-color: var(--color-completed-hover);
+}
+
+
+/* 할일 목록 펼치기/접기 버튼 */
+/* ----------------------------------------------------- */
+.toggle-icon {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  right: 8px;
+  top: 12px;
+  transform-origin: center;
+  transition: 0.6s all;
+}
+.toggle-icon::before {
+  display: block;
+  position: absolute;
+  content: "";
+  width: 9px;
+  height: 3px;
+  background-color: rgb(255, 255, 255);
+  top: 50%;
+  left: 0%;
+  transform: translate(-0%, -50%) rotate(45deg);
+}
+
+.toggle-icon::after {
+  display: block;
+  position: absolute;
+  content: "";
+  width: 9px;
+  height: 3px;
+  background-color: rgb(255, 255, 255);
+  top: 50%;
+  right: 0%;
+  transform: translate(-10%, -50%) rotate(-45deg);
+}
+
+.toggle-collapse {
+  position: absolute;
+  cursor: pointer;
+  right: 5px;
+  top: 7px;
+  opacity: 0;
+  z-index: 2;
+}
+
+.toggle-collapse:checked + .toggle-icon {
+  transform-origin: center;
+  transform: rotate(-90deg);
+  transition: 0.6s all;
+}
+
+.toggle-collapse:checked ~ ul {
+  height: 0px;
+}
+
+

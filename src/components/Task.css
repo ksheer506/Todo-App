@@ -1,5 +1,5 @@
 /* 진행중 및 완료 목록 section */
-.todo_list > ul {
+.todo_list ul {
   margin-top: 3px;
   margin-bottom: 18px;
   display: flex;
@@ -7,6 +7,8 @@
   align-items: center;
   column-gap: 10px;
   padding-left: 3px;
+  overflow-y: hidden;
+  transition: 0.6s all;
 }
 
 .task-label {
@@ -21,13 +23,13 @@
 }
 
 /* 진행중, 완료 목록 (공통) */
-.todo_list > ul {
+/* .todo_list > ul {
   position: relative;
   border-radius: 3px;
   box-shadow: rgba(100, 100, 111, 0.2) 0px 3px 5px 0px;
   padding-top: 2px;
   padding-bottom: 2px;
-}
+} */
 
 :is(.ongoing, .completed) h3 {
   margin-top: 5px;
@@ -36,94 +38,6 @@
 
 :is(.ongoing, .completed) > header {
   flex: 1 1 100%;
-}
-
-/* 할일 목록 펼치기/접기 버튼 */
-/* ----------------------------------------------------- */
-.toggle-icon {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  right: 8px;
-  top: 12px;
-  transform-origin: center;
-  transition: 0.6s all;
-}
-.toggle-icon::before {
-  display: block;
-  position: absolute;
-  content: "";
-  width: 9px;
-  height: 3px;
-  background-color: rgb(255, 255, 255);
-  top: 50%;
-  left: 0%;
-  transform: translate(-0%, -50%) rotate(45deg);
-}
-
-.toggle-icon::after {
-  display: block;
-  position: absolute;
-  content: "";
-  width: 9px;
-  height: 3px;
-  background-color: rgb(255, 255, 255);
-  top: 50%;
-  right: 0%;
-  transform: translate(-10%, -50%) rotate(-45deg);
-}
-
-.toggle-collapse {
-  position: absolute;
-  cursor: pointer;
-  right: 5px;
-  top: 7px;
-  opacity: 0;
-  z-index: 2;
-}
-
-.toggle-collapse:checked + .toggle-icon {
-  transform-origin: center;
-  transform: rotate(-90deg);
-  transition: 0.6s all;
-}
-
-.toggle-collapse:checked ~ li.task {
-  height: 0px;
-}
-
-/* ----------------------------------------------------- */
-/* 진행중 section */
-.ongoing {
-  background-color: var(--color-ongoing-bg);
-}
-
-/* 진행중 제목 */
-.ongoing h3 {
-  color: var(--color-ongoing-title);
-}
-
-.ongoing:hover {
-  background-color: var(--color-ongoing-hover);
-}
-
-/* 완료 section */
-.completed {
-  background-color: var(--color-completed-bg);
-}
-
-/* 완료 제목 */
-.completed h3 {
-  color: var(--color-completed-title);
-}
-
-.completed .task-title {
-  color: var(--color-completed-text);
-  text-decoration: var(--color-completed-text) line-through;
-}
-
-.completed:hover {
-  background-color: var(--color-completed-hover);
 }
 
 /* 각 할일 목록 */
