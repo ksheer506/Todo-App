@@ -1,4 +1,10 @@
-/* ----------------------------------------------------- */
+.todo_list {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(1fr, minmax(100px, max-content));
+  row-gap: 15px;
+}
+
 .todo_list section {
   position: relative;
   border-radius: 4px;
