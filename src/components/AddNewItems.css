@@ -48,6 +48,7 @@
   flex-flow: row wrap;
   row-gap: 8px;
   column-gap: 10px;
+  padding: 3px;
 }
 
 /* 할 일 입력란 */

@@ -113,7 +113,8 @@ input {
 
 #root {
   display: grid;
-  grid-template-columns: 1fr 270px;
+  position: relative;
+  grid-template-columns: 2fr minmax(270px, max-content);
   grid-template-rows: 35px 80px 75%;
   grid-template-areas:
     "nav    nav"
