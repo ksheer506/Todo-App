@@ -1,12 +1,12 @@
 import { db } from "./initialLoad";
 
 import { TaskDB, TagDB } from "../../interfaces/db";
-import { operationT } from "../../interfaces/db";
+import { Operations } from "../../interfaces/db";
 
 
 
 /* "task" ObjectStore 수정 함수 */
-function accessTaskDB(operation: operationT, targetTaskObj: TaskDB) {
+function accessTaskDB(operation: Operations, targetTaskObj: TaskDB) {
   const transaction = db.transaction(["task"], "readwrite");
   const taskObjectStore = transaction.objectStore("task");
   let operationRequest!: IDBRequest;
@@ -31,7 +31,7 @@ function accessTaskDB(operation: operationT, targetTaskObj: TaskDB) {
 }
 
 /* "tagList" ObjectStore 수정 함수 */
-function accessTagDB(operation: operationT, array: Array<TagDB>) {
+function accessTagDB(operation: Operations, array: Array<TagDB>) {
   const transaction = db.transaction(["tagList"], "readwrite");
   const tagListObjectStore = transaction.objectStore("tagList");
   const operationRequest: Array<IDBRequest> = [];

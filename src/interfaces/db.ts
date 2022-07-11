@@ -14,9 +14,9 @@ export interface TagDB extends Identified {
   assignedTask: Array<string>
 }
 
-type dbType = "Task" | "Tag";
-export type operationT = "ADD" | "MODIFY" | "DELETE";
-export type actions = `${dbType}/${operationT}` | ""
+type DBType = "Task" | "Tag";
+export type Operations = "ADD" | "MODIFY" | "DELETE";
+export type actions = `${DBType}/${Operations}` | ""
 
 export interface CurrentWork {
   action: actions;
