@@ -4,8 +4,9 @@ import { EditedTask } from "./task";
 
 interface Callbacks {
   onClick: (arg: { status: boolean; id: string }) => void;
-  onSelectTag: (e: ChangeEvent<HTMLSelectElement>, id: string) => void;
-  onEditTask: (taskId: string, { field, newValue }: EditedTask) => void;
+  onSelectTag: (taskID: string, tagID: string) => void;
+  onEditTask: (taskID: string, { field, newValue }: EditedTask) => void;
+  onDeleteTag: (taskID: string, tagID: string) => void;
 }
 
 export interface SidePanel extends TaskDB {
