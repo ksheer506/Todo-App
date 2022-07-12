@@ -6,12 +6,12 @@ const { useState } = React;
 type taskInput = "title" | "dueDate";
 
 interface addNewTaskProps {
-  addTask: (arg: Pick<TaskDB, "title" | "dueDate">) => void
+  addTask: (arg: Pick<TaskDB, "title" | "dueDate">) => void;
 }
 
 interface addNewTagProps {
-  addTags: (arg: string) => void,
-  children: JSX.Element
+  addTags: (arg: string) => void;
+  children: JSX.Element;
 }
 
 const AddNewTask = React.memo(function ({ addTask }: addNewTaskProps) {
@@ -25,18 +25,29 @@ const AddNewTask = React.memo(function ({ addTask }: addNewTaskProps) {
     addTask(newTask);
   };
 
+  const onEnterPressed = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      onCreate();
+    }
+  };
+
   return (
-      <div id="add-task">
-        <input
-          type="text"
-          placeholder="할 일을 입력해주세요."
-          aria-label="새 할일 제목 입력"
-          value={newTask.title}
-          onChange={(e) => onEdit(e, "title")}
-        />
-        <input type="date" aria-label="새 할일 만료일 입력" onChange={(e) => onEdit(e, "dueDate")} />
-        <input type="button" value="추가하기" onClick={onCreate} />
-      </div>
+    <div id="add-task">
+      <input
+        type="text"
+        placeholder="할 일을 입력해주세요."
+        aria-label="새 할일 제목 입력"
+        value={newTask.title}
+        onKeyUp={onEnterPressed}
+        onChange={(e) => onEdit(e, "title")}
+      />
+      <input
+        type="date"
+        aria-label="새 할일 만료일 입력"
+        onChange={(e) => onEdit(e, "dueDate")}
+      />
+      <input type="button" value="추가하기" onClick={onCreate} />
+    </div>
   );
 });
 
@@ -48,7 +59,7 @@ const AddNewTags = React.memo(function (props: addNewTagProps) {
     addTags(newTag);
     setNewTag("");
   };
-  const onKeyUp = (e: React.KeyboardEvent) => {
+  const onEnterPressed = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       onNewTag();
     }
@@ -63,7 +74,7 @@ const AddNewTags = React.memo(function (props: addNewTagProps) {
           id="createTag"
           placeholder="ex. 태그1 태그2"
           value={newTag}
-          onKeyUp={onKeyUp}
+          onKeyUp={onEnterPressed}
           onChange={(e) => setNewTag(e.target.value)}
         />
         <input type="button" id="addTag" value="태그 추가" onClick={onNewTag} />
