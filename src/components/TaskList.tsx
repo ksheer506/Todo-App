@@ -1,13 +1,17 @@
 import React from "react";
 import { mappingComponent } from "../App";
-import { TaskDB } from "../interfaces/db";
 
-import { TaskList } from "../interfaces/task";
+import { TaskListContainerProps, TaskListSectionProps } from "../interfaces/task";
+import Loading from "./Loading";
 import { Task } from "./Task";
 
 import "./TaskList.css";
 
-const TaskListSection = React.memo(function ({ sectionClass, children }: TaskList) {
+const TaskListSection = React.memo(function ({
+  sectionClass,
+  isLoading,
+  children,
+}: TaskListSectionProps) {
   const sectionName = sectionClass === "ongoing" ? "진행중" : "완료";
 
   return (
@@ -15,20 +19,20 @@ const TaskListSection = React.memo(function ({ sectionClass, children }: TaskLis
       <header>
         <h3>{sectionName}</h3>
       </header>
-      <input type="checkbox" aria-label={`${sectionName} 목록 접기`} className="toggle-collapse" />
+      <input
+        type="checkbox"
+        aria-label={`${sectionName} 목록 접기`}
+        className="toggle-collapse"
+      />
       <div className="toggle-icon"></div>
-      <ul>{children}</ul>
+      {isLoading ? <Loading /> : <ul>{children}</ul>}
     </section>
   );
 });
 
-interface TaskListProps {
-  sections: Array<string>;
-  taskArr: Array<TaskDB>;
-  taskCallbacks;
-}
 
-const TaskListContainer = ({ sections, taskArr, taskCallbacks }: TaskListProps) => {
+
+const TaskListContainer = ({ sections, taskArr, isLoading, taskCallbacks }: TaskListContainerProps) => {
   const ongoing = taskArr.filter((task) => task.isCompleted === false);
   const completed = taskArr.filter((task) => task.isCompleted === true);
   const defaultSection = [
@@ -39,7 +43,7 @@ const TaskListContainer = ({ sections, taskArr, taskCallbacks }: TaskListProps) 
   return (
     <article className="todo_list">
       {defaultSection.map((section) => (
-        <TaskListSection sectionClass={section.name} key={section.name}>
+        <TaskListSection sectionClass={section.name} isLoading={isLoading} key={section.name}>
           {mappingComponent(section.children, Task, taskCallbacks)}
         </TaskListSection>
       ))}
