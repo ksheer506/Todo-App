@@ -1,11 +1,11 @@
 import React from "react";
 
-import { DatePickerType } from "../interfaces/task";
-import { TaskPropsType } from "../interfaces/task";
+import { DatePicker } from "../interfaces/task";
+import { TaskProps } from "../interfaces/task";
 
 import "./Task.css";
 
-const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }: DatePickerType) {
+const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }: DatePicker) {
   return (
     <label className="dueDate">
       <input type="date" onChange={(e) => onChange(e, id)} />
@@ -14,7 +14,7 @@ const MemoDatePicker = React.memo(function DatePicker({ id, dueDate, onChange }:
   );
 });
 
-const Task = React.memo(function (props: TaskPropsType) {
+const Task = React.memo(function (props: TaskProps) {
   const { onTitleClick, onEditTask, onDelete, ...taskObj } = props;
 
   const propsDueDate = {
