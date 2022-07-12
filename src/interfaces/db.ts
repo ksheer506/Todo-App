@@ -14,6 +14,13 @@ export interface TagDB extends Identified {
   assignedTask: Array<string>
 }
 
+export interface StoreDB  {
+  task: TaskDB,
+  tagList: TagDB
+};
+
+export type StoreNames = keyof StoreDB
+
 type DBType = "Task" | "Tag";
 export type Operations = "ADD" | "MODIFY" | "DELETE";
 export type actions = `${DBType}/${Operations}` | ""

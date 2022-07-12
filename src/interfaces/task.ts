@@ -1,24 +1,30 @@
 import React, { ChangeEvent } from "react";
+import { taskCallbacks } from "./callbacks";
 import { TaskDB } from "./db";
 
-export interface TaskPropsType extends TaskDB {
-  onTitleClick: (arg0: string) => void;
-  onEditTask: (arg0: string, arg1: EditedTask) => void;
-  onDelete: (arg0: string) => void;
+export interface TaskListContainerProps {
+  sections: Array<string>;
+  isLoading: boolean;
+  taskArr: Array<TaskDB>;
+  taskCallbacks: taskCallbacks;
 }
 
-export type DatePickerType = Pick<TaskDB, "id" | "dueDate"> & {
-  onChange: (e: ChangeEvent<HTMLInputElement>, id: string) => void;
-};
-
-export interface TaskList {
-  sectionClass: "ongoing" | "completed";
-  children: React.ReactNode;
+export interface TaskListSectionProps {
+  sectionClass: string;
+  isLoading: boolean;
+  children?: React.ReactNode;
 }
 
-type editableField = "title" | "dueDate" | "isCompleted" | "text";
+
+export type TaskProps = TaskDB & taskCallbacks;
+
+type EditableField = "title" | "dueDate" | "isCompleted" | "text";
 
 export interface EditedTask {
-  field: editableField | null;
-  newValue: string | boolean;
+  field: EditableField | null,
+  newValue: string | boolean
 }
+
+export type DatePicker = Pick<TaskDB, "id" | "dueDate"> & {
+  onChange: (e: ChangeEvent<HTMLInputElement>, id: string) => void;
+};
