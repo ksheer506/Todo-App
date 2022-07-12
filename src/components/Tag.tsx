@@ -1,22 +1,22 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+
+import { mappingComponent } from "../App";
+import { TagListProps, TagProps } from "../interfaces/tag";
+import { FilterByTagsDB } from "../modules/db/fetching";
+import Loading from "./Loading";
+
 import "./Tag.css";
-const { useState } = React;
 
-interface TagPropsType {
-  tagText: string, 
-  makeChk: boolean,
-  callbacks?: any
-}
 
-function Tag(props: TagPropsType) {
+
+function Tag({ tagText, makeChk, callbacks }: TagProps) {
   const [selected, setSelected] = useState(false);
-  const { tagText, makeChk, callbacks } = props;
-  const { onDelete, onFiltering } = callbacks || {};
+  const { onDeleteTag, onFilter } = callbacks || {};
 
   /* Tag 선택 토글 */
   const onTagSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelected(!!e.target.checked);
-    onFiltering(e.target.checked, tagText);
+    onFilter(e.target.checked, tagText);
   };
 
   return (
@@ -25,15 +25,52 @@ function Tag(props: TagPropsType) {
         {tagText}
         {makeChk && <input type="checkbox" onChange={onTagSelected} />}
       </label>
-      <button className="delete-tag" onClick={() => onDelete(tagText)}>
+      <button className="delete-tag" onClick={() => onDeleteTag(tagText)}>
         x
       </button>
     </div>
   );
 }
 
-function TagList({ children }: { children: React.ReactElement[] }) {
-  return <div className="tag-list">{children}</div>;
+function TagList({ tagArr, isLoading, setFilteredTask, deleteTag }: TagListProps) {
+  const [selected, SetSelected] = useState<Array<string>>([]);
+
+  const filterByTag = (isSelected: boolean, tagText: string) => {
+    if (!isSelected) {
+      SetSelected((prev) => {
+        return prev.filter((el) => el !== tagText);
+      });
+
+      return;
+    }
+    SetSelected((prev) => [...prev, tagText]);
+  };
+
+  useEffect(() => {
+    (async () => {
+      if (selected.length) {
+        const taskIDs = await FilterByTagsDB(selected);
+        setFilteredTask({ isOn: true, TaskId: taskIDs });
+      } else {
+        setFilteredTask({ isOn: false, TaskId: [] });
+      }
+    })();
+  }, [selected, tagArr]);
+
+  const tagCallbacks = {
+    onDeleteTag: deleteTag,
+    onFilter: filterByTag,
+  };
+
+  return (
+    <div className="tag-list">
+      {isLoading ? (
+        <Loading />
+      ) : (
+        mappingComponent(tagArr, Tag, { makeChk: true, callbacks: tagCallbacks })
+      )}
+    </div>
+  );
 }
 
 export { Tag, TagList };
