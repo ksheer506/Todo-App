@@ -43,8 +43,8 @@ const SideMenu = React.memo(function SideMenu({
 
   /* 해당 Task가 가진 Tag */
   const taskTag = tagDB.reduce((acc: Array<string>, cur) => {
-    const { tagText, assignedTask } = cur;
-    if (assignedTask.includes(id)) acc.push(tagText);
+    const { tagText, assignedTask } = cur || {};
+    if (assignedTask?.includes(id)) acc.push(tagText);
 
     return acc;
   }, []);

@@ -6,7 +6,6 @@ const Dot = styled.span`
   width: 10px;
   height: 10px;
   border-radius: 20px;
-  background-color: white;
   animation: pop 1s;
   animation-iteration-count: infinite;
   animation-timing-function: linear;
@@ -39,6 +38,7 @@ const StyledLoading = styled.div`
   justify-content: center;
   align-items: center;
   column-gap: 5px;
+  width: 100%;
   height: 50px;
   background-color: rgba(255, 255, 255, 0);
 
