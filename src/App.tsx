@@ -2,21 +2,22 @@ import React from "react";
 import { useEffect, useCallback, useMemo, useState } from "react";
 
 import { accessTaskDB, accessTagDB } from "./modules/db/access";
-import { FilterByTagsDB } from "./modules/db/fetching";
+import { fetchAssignedTasks } from "./modules/db/fetching";
 
-import { TaskDB, TagDB, operationT, Identified, CurrentWork } from "./interfaces/db";
+import { TaskDB, TagDB, Operations, Identified, CurrentWork } from "./interfaces/db";
 import { EditedTask } from "./interfaces/task";
 
-import { Task } from "./components/Task";
 import SectionPanel from "./components/SectionPanel";
-import { TaskListContainer, TaskListSection } from "./components/TaskList";
+import { TaskListContainer } from "./components/TaskList";
 import { AddNewTask, AddNewTags } from "./components/AddNewItems";
-import SideMenu from "./components/SideMenu";
-import { Tag, TagList } from "./components/Tag";
+import SideMenu from "./components/SidePanel";
+import { TagList } from "./components/Tag";
 import Nav from "./components/Nav";
+import Header from "./components/Header";
 
 import "./App.css";
-import { loadIndexedDB } from "./modules/db/initialLoad";
+import { fetchAllDB } from "./modules/db/initialLoad";
+import Toast from "./components/Toast";
 
 class Todo {
   id: string;
@@ -52,27 +53,39 @@ export function mappingComponent<T extends Identified, S>(
   });
 }
 
+
 function App() {
   const [currentWork, setCurrentWork] = useState<CurrentWork>({ action: "" });
+  const [isLoading, setIsLoading] = useState(true);
   const [side, setSide] = useState<{ status: boolean; id: string }>({
     status: false,
     id: "",
   });
   const [tagArr, setTagArr] = useState<Array<TagDB>>([]);
-  const [selectedTags, setSelectedTags] = useState<Array<string>>([]);
-  const [taskArr, setTaskArr] = useState<Array<TaskDB>>([]); 
+  const [taskArr, setTaskArr] = useState<Array<TaskDB>>([]);
+  const [filtered, setFiltered] = useState<{ isOn: boolean; TaskId: Array<string> }>({
+    isOn: false,
+    TaskId: [],
+  });
 
+  /* DB 불러오기 */
   useEffect(() => {
     (async () => {
-      const [tasks, tags] = await loadIndexedDB()
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1500);
+      });
+
+      const [tags, tasks] = await fetchAllDB();
+
       setTaskArr(tasks);
       setTagArr(tags);
+      setIsLoading(false);
     })();
   }, []);
 
   /* 할일 사이드 메뉴에서 보기 */
-  const showToSide = useCallback((taskId: string) => {
-    setSide({ status: true, id: taskId });
+  const showToSide = useCallback((taskID: string) => {
+    setSide({ status: true, id: taskID });
   }, []);
   const sideContent = { ...side, ...taskArr.filter((task) => task.id === side.id)[0] };
 
@@ -86,59 +99,43 @@ function App() {
 
     const newTaskInst = new Todo(task);
 
-    setCurrentWork({ action: "Task/ADD", task: newTaskInst });
     setTaskArr((prev) => [...prev, newTaskInst]);
+    setCurrentWork({ action: "Task/ADD", task: newTaskInst });
   }, []);
 
-  /* 할일 변경(dueDate, isCompleted, text) */
+  /* 2. 할일 변경(dueDate, isCompleted, text) */
   const onEditTask = useCallback(
-    (taskId: string, { field, newValue }: EditedTask) => {
+    (taskID: string, { field, newValue }: EditedTask) => {
       if (!field) return;
 
-      const taskObj = findObj(taskArr, taskId);
+      const taskObj = findObj(taskArr, taskID);
       const editedTask = { ...taskObj, [field]: newValue };
 
-      console.log(editedTask);
-      setCurrentWork({ action: "Task/MODIFY", task: editedTask });
       setTaskArr((prev) => {
         return prev.map((task) => {
-          if (task.id === taskId) {
+          if (task.id === taskID) {
             return editedTask;
           }
           return task;
         });
       });
+      setCurrentWork({ action: "Task/MODIFY", task: editedTask });
     },
     [taskArr]
   );
 
   /* 3. 할일 삭제 */
   const deleteTask = useCallback(
-    (taskId: string) => {
-      const taskObj = findObj(taskArr, taskId);
+    (taskID: string) => {
+      const taskObj = findObj(taskArr, taskID);
 
-      setCurrentWork({ action: "Task/DELETE", task: taskObj });
       setTaskArr((prev) => {
-        return prev.filter((task) => task.id !== taskId);
+        return prev.filter((task) => task.id !== taskID);
       });
+      setCurrentWork({ action: "Task/DELETE", task: taskObj });
     },
     [taskArr]
   );
-
-  /* DB 업데이트 */
-  useEffect(() => {
-    const { action, task, tag }: CurrentWork = currentWork;
-    if (!action) return;
-
-    const [db, operation] = action.match(/\w{1,10}/g) || ["", ""];
-
-    if (task) {
-      accessTaskDB(operation as operationT, task);
-    }
-    if (tag) {
-      accessTagDB(operation as operationT, tag);
-    }
-  }, [currentWork]);
 
   const addTags = useCallback((newTag: string) => {
     // [{tagText: "태그1", id: "태그1", assignedTask: []}, { ... }, ...]
@@ -155,59 +152,77 @@ function App() {
     }
     // TODO: 이미 존재하는 태그 걸러내기
 
-    setCurrentWork({ action: "Tag/ADD", tag: newTags });
     setTagArr((prev) => [...prev, ...newTags]);
+    setCurrentWork({ action: "Tag/ADD", tag: newTags });
   }, []);
 
   const deleteTag = (tagText: string) => {
     const tagObj = findObj(tagArr, tagText);
 
-    setCurrentWork({ action: "Tag/DELETE", tag: [tagObj] });
     setTagArr((prev) => {
       return prev.filter((tag) => tag.id !== tagText);
     });
+    setCurrentWork({ action: "Tag/DELETE", tag: [tagObj] });
   };
-
-  const filterByTag = (isSelected: boolean, tagText: string) => {
-    if (!isSelected) {
-      setSelectedTags((prev) => {
-        return prev.filter((el) => el !== tagText);
-      });
-
-      return;
-    }
-    setSelectedTags((prev) => [...prev, tagText]);
-  };
-
-  useEffect(() => {
-    (async () => {
-      if (selectedTags.length) {
-        await FilterByTagsDB(selectedTags);
-      }
-    })();
-  }, [selectedTags]);
 
   /* 사이드 패널에서 태그 추가 */
-  const selectTaskTag = (e: React.ChangeEvent<HTMLSelectElement>, taskId: string) => {
-    if (!e.target.value) return;
+  const selectTaskTag = (taskID: string, tagID: string) => {
+    if (!tagID) return;
 
-    const tagObj = findObj(tagArr, e.target.value);
+    const tagObj = findObj(tagArr, tagID);
     const editedTag = {
       ...tagObj,
-      assignedTask: tagObj.assignedTask.concat(taskId),
+      assignedTask: tagObj.assignedTask.concat(taskID),
     };
 
     setTagArr((prev) => {
       return prev.map((tag) => {
-        if (tag.id === e.target.value) {
+        if (tag.id === tagID) {
           return editedTag;
         }
         return tag;
       });
     });
-
     setCurrentWork({ action: "Tag/MODIFY", tag: [editedTag] });
   };
+
+  /* 사이드 패널에서 태그 삭제 */
+  const deleteTaskTag = async (taskID: string, tagID: string) => {
+    const [targetTag] = await fetchAssignedTasks([tagID]);
+    const idx = targetTag.assignedTask.findIndex((task) => task === taskID);
+    const editedTag = {
+      ...targetTag,
+      assignedTask: [
+        ...targetTag.assignedTask.slice(0, idx),
+        ...targetTag.assignedTask.slice(idx + 1),
+      ],
+    };
+
+    setTagArr((prev) => {
+      return prev.map((tag) => {
+        if (tag.id === tagID) {
+          return editedTag;
+        }
+        return tag;
+      });
+    });
+    setCurrentWork({ action: "Tag/MODIFY", tag: [editedTag] });
+  };
+
+  /* DB 업데이트 */
+  useEffect(() => {
+    const { action, task, tag }: CurrentWork = currentWork;
+    if (!action) return;
+
+    const [db, operation] = action.match(/\w{1,10}/g) || ["", ""];
+
+    if (task) {
+      accessTaskDB(operation as Operations, task);
+    }
+    if (tag) {
+      accessTagDB(operation as Operations, tag);
+    }
+  }, [currentWork]);
 
   const taskCallbacks = {
     onTitleClick: showToSide,
@@ -215,34 +230,22 @@ function App() {
     onEditTask,
   };
 
-  const tagCallbacks = {
-    onDelete: deleteTag,
-    onFiltering: filterByTag,
-  };
-
   const sideCallbacks = {
     onClick: setSide,
     onSelectTag: selectTaskTag,
     onEditTask,
+    onDeleteTag: deleteTaskTag,
   };
 
-
-  const ongoing = taskArr.filter((task) => task.isCompleted === false);
-  const completed = taskArr.filter((task) => task.isCompleted === true);
-  const tags = mappingComponent(tagArr, Tag, { makeChk: true, callbacks: tagCallbacks });
+  const data = filtered.isOn
+    ? taskArr.filter((task) => filtered.TaskId.includes(task.id))
+    : taskArr;
 
   return (
     <>
+      <Toast text="test" dismissTime={1000} />
       <Nav />
-      <header>
-        <h2 id="todo-title">할 일 목록</h2>
-        <button id="edit-title" aria-label="앱 제목 변경"></button>
-        <div className="toggle-dark">
-          <p>다크 모드</p>
-          <input type="checkbox" id="default" />
-          <label className="switch" htmlFor="default" />
-        </div>
-      </header>
+      <Header />
       <div
         id="background"
         className={side.status ? "mobile" : ""}
@@ -251,11 +254,21 @@ function App() {
       <main className={side ? "sideshow" : ""}>
         <AddNewTask addTask={addTask} />
         <AddNewTags addTags={addTags}>
-          <TagList>{tags}</TagList>
+          <TagList
+            tagArr={tagArr}
+            isLoading={isLoading}
+            setFilteredTask={setFiltered}
+            deleteTag={deleteTag}
+          />
         </AddNewTags>
         <SectionPanel />
         <article className="todo_list">
-          <TaskListContainer sections={[""]} taskArr={taskArr} taskCallbacks={taskCallbacks} />
+          <TaskListContainer
+            sections={[""]}
+            taskArr={data}
+            taskCallbacks={taskCallbacks}
+            isLoading={isLoading}
+          />
         </article>
       </main>
       <SideMenu {...sideContent} tagDB={tagArr} callbacks={sideCallbacks} />
