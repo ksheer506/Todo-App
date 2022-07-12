@@ -1,54 +1,93 @@
-import { TaskDB, TagDB } from "../../interfaces/db";
+import { StoreDB } from "../../interfaces/db";
 
-let db: IDBDatabase;
+// T: StoreName -> 해당하는 DB의 타입으로 매핑하는 방법?
 
-/* IndexedDB에 저장된 데이터를 불러오는 함수 */
-function loadIndexedDB() {
-  const transaction = db.transaction(['task', 'tagList']);
-  const taskObjectStore = transaction.objectStore('task'); // A. Task 가져오기
-  const taskFetchRequest = taskObjectStore.getAll();
-  const tagObjectStore = transaction.objectStore('tagList'); // B. 태그 리스트 목록 가져오기
-  const tagFetchRequest = tagObjectStore.getAll();
+const userTodoV2 = [
+  {name: "task", keyPath: "id"},
+  {name: "tagList", keyPath: "tagText"}
+]
 
-  const taskReq: Promise<Array<TaskDB>> = new Promise((resolve) => {
-    taskFetchRequest.onsuccess = () => {
-      // C-1. "Task" ObjectStore 로드 후 작업
-      resolve(taskFetchRequest.result);
-    };
-  });
-  const tagReq: Promise<Array<TagDB>> = new Promise((resolve) => {
-    tagFetchRequest.onsuccess = () => {
-      // C-2. "TagList" ObjectStore 로드 후 작업
-      resolve(tagFetchRequest.result);
-    };
-  });
-
-  return Promise.all([taskReq, tagReq])
+interface IDBIndex {
+  name: string;
+  isUnique: boolean;
 }
 
-/* Task 데이터 저장에 indexedDB 이용 */
-const dbRequest = indexedDB.open('user-Todo', 1);
+interface UpgradeNeededDB {
+  name: string;
+  keyPath: string;
+  indexes?: Array<IDBIndex>;
+}
 
-dbRequest.onupgradeneeded = () => {
-  db = dbRequest.result;
+export function openIDB(
+  name: string,
+  version: number,
+  newVersionInfo: Array<UpgradeNeededDB> = userTodoV2
+): Promise<IDBDatabase> {
+  const dbRequest = indexedDB.open(name, version);
 
-  // "task" Object Store 생성
-  const taskObjectStore = db.createObjectStore('task', { keyPath: 'id' });
-  db.createObjectStore('tagList', { keyPath: 'tagText' });
+  return new Promise((resolve, reject) => {
+    dbRequest.onupgradeneeded = () => {
+      const db = dbRequest.result;
 
-  // Index 생성
-  taskObjectStore.createIndex('title', 'title', { unique: false });
-  taskObjectStore.createIndex('isCompleted', 'isCompleted', { unique: false });
-  taskObjectStore.createIndex('dueDate', 'dueDate', { unique: false });
-  taskObjectStore.createIndex('tags', 'tags', { unique: false });
-};
+      upgradeIDB(db, newVersionInfo);
+      resolve(db);
+    };
 
-dbRequest.onsuccess = () => {
-  db = dbRequest.result;
+    dbRequest.onsuccess = () => {
+      resolve(dbRequest.result);
+    };
 
-  loadIndexedDB();
-};
+    dbRequest.onerror = () => {
+      /* reject("Failed to load DB"); */
+    };
+  });
+} // db 반환
 
-dbRequest.onerror = () => { throw new Error("Failed to load DB") };
+function upgradeIDB(db: IDBDatabase, objectStores: Array<UpgradeNeededDB>) {
+  // FIXME: objectStore가 이미 존재할 때 업그레이드 필요할 경우, 처리 방법
+  objectStores.forEach((os) => {
+    const { name, keyPath, indexes } = os;
+    const objectStore = db.createObjectStore(name, { keyPath: keyPath });
 
-export { db, loadIndexedDB };
+    if (indexes?.length) {
+      indexes.forEach((idx) => {
+        const { name, isUnique } = idx;
+
+        objectStore.createIndex(name, name, { unique: isUnique });
+      });
+    }
+  });
+}
+
+const db = openIDB("user-Todo", 2);
+
+/* IndexedDB에 저장된 데이터를 불러오는 함수 */
+async function fetchAllDB(storeName: Array<keyof StoreDB> = ["tagList", "task"]) {
+  const transaction = (await db).transaction(storeName);
+
+  const storeData = storeName.map(<T extends string>(store: T) => {
+    const objectStore = transaction.objectStore(store);
+    const fetchReq: IDBRequest = objectStore.getAll();
+
+    return new Promise<StoreDB[T & keyof StoreDB]>((resolve) => {
+      fetchReq.onsuccess = () => {
+        resolve(fetchReq.result);
+      };
+    });
+  });
+
+  return Promise.all(storeData);
+
+}
+
+
+
+export async function openTransaction(storeName: string) {
+  const db = await openIDB("user-Todo", 2);
+  const transaction = db.transaction(storeName);
+  const objectStore = transaction.objectStore(storeName);
+
+}
+
+
+export { db, fetchAllDB };
