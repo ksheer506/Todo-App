@@ -1,11 +1,10 @@
 import React from "react";
-import { useEffect, useCallback, useMemo, useState } from "react";
+import { useEffect, useCallback, useState } from "react";
 
 import { accessTaskDB, accessTagDB } from "./modules/db/access";
 import { fetchAssignedTasks } from "./modules/db/fetching";
 
 import { TaskDB, TagDB, Operations, Identified, CurrentWork } from "./interfaces/db";
-import { EditedTask } from "./interfaces/task";
 
 import SectionPanel from "./components/SectionPanel";
 import { TaskListContainer } from "./components/TaskList";
@@ -14,10 +13,11 @@ import SideMenu from "./components/SidePanel";
 import { TagList } from "./components/Tag";
 import Nav from "./components/Nav";
 import Header from "./components/Header";
+import Toast from "./components/Toast";
 
 import "./App.css";
 import { fetchAllDB } from "./modules/db/initialLoad";
-import Toast from "./components/Toast";
+import { useStateEditor } from "./custom-hooks";
 
 class Todo {
   id: string;
@@ -43,7 +43,7 @@ function findObj<T extends Identified>(data: Array<T>, id: string): T {
 
 export function mappingComponent<T extends Identified, S>(
   arr: Array<T>,
-  Component: React.FC<T & S>,
+  Component: (x: T & S) => React.ReactElement | null,
   extraProps: S
 ): React.ReactElement[] {
   return arr.map((props) => {
@@ -62,7 +62,7 @@ function App() {
     id: "",
   });
   const [tagArr, setTagArr] = useState<Array<TagDB>>([]);
-  const [taskArr, setTaskArr] = useState<Array<TaskDB>>([]);
+  const [taskArr, setTaskArr, onEditTask] = useStateEditor<TaskDB>([]);
   const [filtered, setFiltered] = useState<{ isOn: boolean; TaskId: Array<string> }>({
     isOn: false,
     TaskId: [],
@@ -102,27 +102,6 @@ function App() {
     setTaskArr((prev) => [...prev, newTaskInst]);
     setCurrentWork({ action: "Task/ADD", task: newTaskInst });
   }, []);
-
-  /* 2. 할일 변경(dueDate, isCompleted, text) */
-  const onEditTask = useCallback(
-    (taskID: string, { field, newValue }: EditedTask) => {
-      if (!field) return;
-
-      const taskObj = findObj(taskArr, taskID);
-      const editedTask = { ...taskObj, [field]: newValue };
-
-      setTaskArr((prev) => {
-        return prev.map((task) => {
-          if (task.id === taskID) {
-            return editedTask;
-          }
-          return task;
-        });
-      });
-      setCurrentWork({ action: "Task/MODIFY", task: editedTask });
-    },
-    [taskArr]
-  );
 
   /* 3. 할일 삭제 */
   const deleteTask = useCallback(
