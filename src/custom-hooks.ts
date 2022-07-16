@@ -43,12 +43,19 @@ function findObj<T extends Identified>(data: Array<T>, id: string): T {
 export function useStateEditor<T extends Identified>(initialData: Array<T>) {
   const [data, setData] = useState(initialData);
 
-  const editTask = useCallback(
-    (targetID: string, { field, newValue }: {field: string, newValue: any}) => {
+  const editState = useCallback(
+    (targetID: string, { field, newValue }: { field: keyof T; newValue: unknown }) => {
       if (!field) return;
 
-      const dataElement = findObj(data, targetID);
-      const modified = { ...dataElement, [field]: newValue };
+      const dataEl = findObj(data, targetID);
+      let _newVal = newValue;
+
+      if (Array.isArray(dataEl[field])) {
+        _newVal = [...dataEl[field], newValue];
+      } else if (typeof dataEl[field] === "object" && typeof newValue === "object") {
+        _newVal = { ...dataEl[field], ...newValue };
+      }
+      const modified = { ...dataEl, [field]: _newVal };
 
       setData((prev) => {
         return prev.map((el) => {
@@ -63,16 +70,18 @@ export function useStateEditor<T extends Identified>(initialData: Array<T>) {
     [data]
   );
 
-  return [data, editTask, setData];
+  return [data, setData, editState] as const;
 }
 
-export function useLocalStorage(key: string, initialValue = ""): [string, (x: string) => void] {
+export function useLocalStorage(
+  key: string,
+  initialValue = ""
+): [string, (x: string) => void] {
   const [data, setData] = useState<string>(initialValue);
 
   const setLocalStorage = (value: string) => {
     if (value) {
       localStorage.setItem(key, value);
-      console.log(data);
       setData(value);
     }
   };
@@ -84,7 +93,7 @@ export function useLocalStorage(key: string, initialValue = ""): [string, (x: st
       localStorage.setItem(key, initialValue);
 
       return;
-    } 
+    }
     setData(storageData);
   }, []);
 
@@ -94,7 +103,7 @@ export function useLocalStorage(key: string, initialValue = ""): [string, (x: st
 export function useDarkMode(): [boolean, () => void] {
   const [mode, setMode] = useLocalStorage("darkMode", "false");
   const modeBoolean = JSON.parse(mode);
-  console.log(mode);
+
   const setDarkMode = () => {
     setMode(`${!modeBoolean}`);
   };
