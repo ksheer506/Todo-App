@@ -17,7 +17,7 @@ import Toast from "./components/Toast";
 
 import "./App.css";
 import { fetchAllDB } from "./modules/db/initialLoad";
-import { useStateEditor } from "./custom-hooks";
+import { useObjectEditor } from "./custom-hooks";
 
 class Todo {
   id: string;
@@ -52,7 +52,73 @@ export function mappingComponent<T extends Identified, S>(
     return <Component {...componentProps} />;
   });
 }
+// TODO: 변경사항이 있는 객체를 저장해 IDB와 동기화할 수 있게 수정
+function taskReducer(state: Array<TaskDB>, { type, payload }) {
+  switch (type) {
+    case "ADD":
+      // payload: { title: "1", dueDate?: "2022-01-01" }
+      if (!payload.title) {
+        alert("할 일을 입력해주세요.");
+        return;
+      }
+      const newTaskInst = new Todo(payload);
 
+      return [...state, newTaskInst];
+    case "DELETE":
+      // payload: { taskID: "1367556" }
+      return state.filter((task) => task.id !== payload.taskID);
+    default:
+      return state;
+  }
+}
+
+function tagReducer(state: Array<TagDB>, { type, payload }) {
+  const { newTags, taskID, tagID } = payload;
+  switch (type) {
+    case "ADD":
+      // payload: { newTag: "태그1 태그2" }
+      const newTags =
+        payload.newTag.match(/[^#\s]\S{0,}[^\s,]/g)?.map((tagText: string) => ({
+          tagText: tagText,
+          id: tagText,
+          assignedTask: [],
+        })) || [];
+
+      if (newTags.length < 1) {
+        // TODO: 모달 등의 컴포넌트 이용하기
+        alert("허용되지 않는 태그입니다.");
+      }
+      // TODO: 이미 존재하는 태그 걸러내기
+
+      return [...state, ...newTags];
+    case "DELETE":
+      // payload: { tagID: "태그1" }
+      return state.filter((tag) => tag.id !== payload.tagID);
+    case "ADD_TASK_TAG":
+      // payload: { taskID: "1367556", tagID: "태그1" }
+      if (!tagID) return;
+
+      return state.map((tag) => {
+        if (tag.id === tagID) {
+          const editedTag = { ...tag, assignedTask: [...tag.assignedTask, taskID] };
+          return editedTag;
+        }
+        return tag;
+      });
+    case "DELETE_TASK_TAG":
+      if (!tagID) return;
+
+      return state.map((tag) => {
+        if (tag.id === tagID) {
+          const editedAT = tag.assignedTask.filter((task) => task !== taskID);
+          return { ...tag, assignedTask: editedAT };
+        }
+        return tag;
+      });
+    default:
+      return state;
+  }
+}
 
 function App() {
   const [currentWork, setCurrentWork] = useState<CurrentWork>({ action: "" });
@@ -61,8 +127,8 @@ function App() {
     status: false,
     id: "",
   });
-  const [tagArr, setTagArr] = useState<Array<TagDB>>([]);
-  const [taskArr, setTaskArr, onEditTask] = useStateEditor<TaskDB>([]);
+  const [tagArr, setTagArr, onEditTag, tagHistory] = useObjectEditor<TagDB>([], "tag");
+  const [taskArr, setTaskArr, onEditTask, taskHistory] = useObjectEditor<TaskDB>([], "task");
   const [filtered, setFiltered] = useState<{ isOn: boolean; TaskId: Array<string> }>({
     isOn: false,
     TaskId: [],
@@ -100,7 +166,7 @@ function App() {
     const newTaskInst = new Todo(task);
 
     setTaskArr((prev) => [...prev, newTaskInst]);
-    setCurrentWork({ action: "Task/ADD", task: newTaskInst });
+    setCurrentWork({ action: "task/ADD", task: newTaskInst });
   }, []);
 
   /* 3. 할일 삭제 */
@@ -111,7 +177,7 @@ function App() {
       setTaskArr((prev) => {
         return prev.filter((task) => task.id !== taskID);
       });
-      setCurrentWork({ action: "Task/DELETE", task: taskObj });
+      setCurrentWork({ action: "task/DELETE", task: taskObj });
     },
     [taskArr]
   );
@@ -132,7 +198,7 @@ function App() {
     // TODO: 이미 존재하는 태그 걸러내기
 
     setTagArr((prev) => [...prev, ...newTags]);
-    setCurrentWork({ action: "Tag/ADD", tag: newTags });
+    setCurrentWork({ action: "tag/ADD", tag: newTags });
   }, []);
 
   const deleteTag = (tagText: string) => {
@@ -141,7 +207,7 @@ function App() {
     setTagArr((prev) => {
       return prev.filter((tag) => tag.id !== tagText);
     });
-    setCurrentWork({ action: "Tag/DELETE", tag: [tagObj] });
+    setCurrentWork({ action: "tag/DELETE", tag: [tagObj] });
   };
 
   /* 사이드 패널에서 태그 추가 */
@@ -162,7 +228,7 @@ function App() {
         return tag;
       });
     });
-    setCurrentWork({ action: "Tag/MODIFY", tag: [editedTag] });
+    setCurrentWork({ action: "tag/MODIFY", tag: [editedTag] });
   };
 
   /* 사이드 패널에서 태그 삭제 */
@@ -185,23 +251,23 @@ function App() {
         return tag;
       });
     });
-    setCurrentWork({ action: "Tag/MODIFY", tag: [editedTag] });
+    setCurrentWork({ action: "tag/MODIFY", tag: [editedTag] });
   };
 
   /* DB 업데이트 */
   useEffect(() => {
-    const { action, task, tag }: CurrentWork = currentWork;
+    const { action, task } = taskHistory;
     if (!action) return;
 
-    const [db, operation] = action.match(/\w{1,10}/g) || ["", ""];
+    accessTaskDB(action as Operations, task);
+  }, [taskHistory]);
 
-    if (task) {
-      accessTaskDB(operation as Operations, task);
-    }
-    if (tag) {
-      accessTagDB(operation as Operations, tag);
-    }
-  }, [currentWork]);
+  useEffect(() => {
+    const { action, tag } = tagHistory;
+    if (!action) return;
+
+    accessTagDB(action as Operations, tag);
+  }, [tagHistory]);
 
   const taskCallbacks = {
     onTitleClick: showToSide,
