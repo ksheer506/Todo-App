@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
-import { Identified, TaskDB } from "./interfaces/db";
-import { EditedTask } from "./interfaces/task";
+import { useState, useEffect, useCallback, useRef, useReducer } from "react";
+import { Identified } from "./interfaces/db";
 import { fetchAllData } from "./modules/db/fetching";
 
-export function useIndexedDB<T>(storeName: string) {
+/* export function useIndexedDB<T>(storeName: string) {
   const [data, setData] = useState<Array<T>>([]);
 
   useEffect(() => {
@@ -16,61 +15,58 @@ export function useIndexedDB<T>(storeName: string) {
       setData(dbData);
     })();
   }, []);
+} */
+
+type Reducer<T> = (state: T, action: ReducerAction) => T;
+interface ReducerAction {
+  type: string;
+  payload: any;
 }
 
-class Todo {
-  id: string;
-  title: string;
-  isCompleted: boolean;
-  dueDate: string;
-  text: string;
-  tags: Array<string>;
+export function useDispatchHistory<T extends Array<Identified>>(
+  reducer: Reducer<T>,
+  initialData: T
+) {
+  const { current } = useRef<{ action: string; id: string }>({
+    action: "",
+    id: "",
+  });
+  const [data, dispatchData] = useReducer(reducer, initialData);
+  const [history, setHistory] = useState<{
+    action: string;
+    id: string;
+    item: typeof initialData[0];
+  }>();
+  console.log(data);
 
-  constructor(object: Pick<TaskDB, "title" | "dueDate">) {
-    this.id = `id_${Date.now()}`;
-    this.title = object.title;
-    this.isCompleted = false;
-    this.dueDate = object.dueDate || "";
-    this.text = "";
-    this.tags = [];
-  }
-}
+  const mDipspatch = useCallback(({ type, payload }: ReducerAction) => {
+    console.log("실행", type, payload);
+    switch (type) {
+      case "ADD":
+        if (!payload.id) {
+          payload.id = `${Date.now()}`;
+        }
+        current.action = "ADD";
+        break;
+      case "DELETE":
+        current.action = "DELETE";
+        break;
+      case "INIT":
+        break;
+      default:
+        current.action = "MODIFY";
+    }
+    current.id = payload.id;
+    dispatchData({ type, payload });
+  }, []);
 
-function findObj<T extends Identified>(data: Array<T>, id: string): T {
-  return data.filter((obj) => obj.id === id)[0];
-}
+  useEffect(() => {
+    const currentItem = data.filter((el) => el.id === current.id)[0];
 
-export function useStateEditor<T extends Identified>(initialData: Array<T>) {
-  const [data, setData] = useState(initialData);
+    setHistory({ action: current.action, id: current.id, item: currentItem });
+  }, [data]);
 
-  const editState = useCallback(
-    (targetID: string, { field, newValue }: { field: keyof T; newValue: unknown }) => {
-      if (!field) return;
-
-      const dataEl = findObj(data, targetID);
-      let _newVal = newValue;
-
-      if (Array.isArray(dataEl[field])) {
-        _newVal = [...dataEl[field], newValue];
-      } else if (typeof dataEl[field] === "object" && typeof newValue === "object") {
-        _newVal = { ...dataEl[field], ...newValue };
-      }
-      const modified = { ...dataEl, [field]: _newVal };
-
-      setData((prev) => {
-        return prev.map((el) => {
-          if (el.id === targetID) {
-            return modified;
-          }
-          return el;
-        });
-      });
-      /* setCurrentWork({ action: "Task/MODIFY", task: history }); */
-    },
-    [data]
-  );
-
-  return [data, setData, editState] as const;
+  return [data, mDipspatch, history] as const;
 }
 
 export function useLocalStorage(
