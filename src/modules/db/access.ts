@@ -1,4 +1,4 @@
-import { TaskDB, TagDB } from "../../interfaces/db";
+import { TaskDB, TagDB, Identified } from "../../interfaces/db";
 import { Operations } from "../../interfaces/db";
 import { openIDB } from "./initialLoad";
 
@@ -41,19 +41,16 @@ async function accessTagDB(operation: Operations, array: Array<TagDB>) {
       array.forEach((tagObj, i) => {
         operationRequest[i] = tagListObjectStore.add(tagObj);
       });
-      resultLog = "성공적으로 태그를 추가했습니다.";
       break;
     case "DELETE":
       array.forEach((tagObj, i) => {
         operationRequest[i] = tagListObjectStore.delete(tagObj.tagText);
       });
-      resultLog = "성공적으로 태그를 제거했습니다.";
       break;
     case "MODIFY":
       array.forEach((tagObj, i) => {
         operationRequest[i] = tagListObjectStore.put(tagObj);
       });
-      resultLog = "성공적으로 태그를 업데이트했습니다.";
       break;
     default:
       throw new Error(
@@ -66,4 +63,34 @@ async function accessTagDB(operation: Operations, array: Array<TagDB>) {
   };
 }
 
-export { accessTaskDB, accessTagDB };
+async function accessDB<T extends Identified>(objectStore: string, operation: Operations, array: Array<T>) {
+  const transaction = (await db).transaction(objectStore, "readwrite");
+  const tagListObjectStore = transaction.objectStore(objectStore);
+  const operationRequest: Array<IDBRequest> = [];
+
+  switch (operation) {
+    case "ADD":
+      array.forEach((el, i) => {
+        operationRequest[i] = tagListObjectStore.add(el);
+      });
+      break;
+    case "DELETE":
+      array.forEach((el, i) => {
+        operationRequest[i] = tagListObjectStore.delete(el.id);
+      });
+      break;
+    case "MODIFY":
+      array.forEach((el, i) => {
+        operationRequest[i] = tagListObjectStore.put(el);
+      });
+      break;
+    default:
+      throw new Error("parameter 1 should be one of 'ADD', 'DELETE', and 'MODIFY'");
+  }
+
+  transaction.onerror = (e) => {
+    e.preventDefault();
+  };
+}
+
+export { accessTaskDB, accessTagDB, accessDB };
