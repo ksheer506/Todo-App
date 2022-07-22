@@ -1,6 +1,4 @@
-import { StoreDB } from "../../interfaces/db";
-
-// T: StoreName -> 해당하는 DB의 타입으로 매핑하는 방법?
+import { StoreDB, TagDB, TaskDB } from "../../interfaces/db";
 
 const userTodoV2 = [
   {name: "task", keyPath: "id"},
@@ -62,7 +60,7 @@ function upgradeIDB(db: IDBDatabase, objectStores: Array<UpgradeNeededDB>) {
 const db = openIDB("user-Todo", 2);
 
 /* IndexedDB에 저장된 데이터를 불러오는 함수 */
-async function fetchAllDB(storeName: Array<keyof StoreDB> = ["tagList", "task"]) {
+async function fetchAllDB(storeName: Array<keyof StoreDB> = ["tagList", "task"]): Promise<[TagDB[], TaskDB[]]> {
   const transaction = (await db).transaction(storeName);
 
   const storeData = storeName.map(<T extends string>(store: T) => {
@@ -81,12 +79,9 @@ async function fetchAllDB(storeName: Array<keyof StoreDB> = ["tagList", "task"])
 }
 
 
-
 export async function openTransaction(storeName: string) {
-  const db = await openIDB("user-Todo", 2);
-  const transaction = db.transaction(storeName);
+  const transaction = (await db).transaction(storeName);
   const objectStore = transaction.objectStore(storeName);
-
 }
 
 
