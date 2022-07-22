@@ -21,7 +21,7 @@ export interface StoreDB  {
 
 export type StoreNames = keyof StoreDB
 
-type DBType = "Task" | "Tag";
+type DBType = "task" | "tag";
 export type Operations = "ADD" | "MODIFY" | "DELETE";
 export type actions = `${DBType}/${Operations}` | ""
 
