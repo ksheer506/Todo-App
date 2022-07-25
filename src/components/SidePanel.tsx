@@ -17,7 +17,7 @@ const SideMenu = React.memo(function SideMenu({
   tagDB,
   callbacks,
 }: SidePanel) {
-  const { onClick, onSelectTag, onEditTask, onDeleteTag } = callbacks;
+  const { onClick, taskDispatch, tagDispatch } = callbacks;
   const [onEdit, setOnEdit] = useState<EditedTask>({ field: null, newValue: "" });
   const editField = useRef(null);
 
@@ -26,6 +26,16 @@ const SideMenu = React.memo(function SideMenu({
       {el.tagText}
     </option>
   ));
+
+  const onEditTask = (id: string, { field, newValue }: EditedTask) => {
+    taskDispatch({ type: "EDIT", payload: { id, field, newValue } });
+  };
+  const onSelectTag = (taskID: string, id: string) => {
+    tagDispatch({ type: "ADD_TASK_TAG", payload: { taskID, id } });
+  };
+  const onDeleteTag = (taskID: string, id: string) => {
+    tagDispatch({ type: "DELETE_TASK_TAG", payload: { taskID, id } });
+  };
 
   const onEditCompleted = () => {
     onEditTask(id, onEdit);

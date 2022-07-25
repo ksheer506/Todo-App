@@ -7,8 +7,6 @@ import Loading from "./Loading";
 
 import "./Tag.css";
 
-
-
 function Tag({ tagText, makeChk, callbacks }: TagProps) {
   const [selected, setSelected] = useState(false);
   const { onDeleteTag, onFilter } = callbacks || {};
@@ -32,8 +30,12 @@ function Tag({ tagText, makeChk, callbacks }: TagProps) {
   );
 }
 
-function TagList({ tagArr, isLoading, setFilteredTask, deleteTag }: TagListProps) {
+function TagList({ tagArr, isLoading, setFilteredTask, tagDispatch }: TagListProps) {
   const [selected, SetSelected] = useState<Array<string>>([]);
+
+  const deleteTag = (id: string) => {
+    tagDispatch({ type: "DELETE", payload: { id } });
+  };
 
   const filterByTag = (isSelected: boolean, tagText: string) => {
     if (!isSelected) {

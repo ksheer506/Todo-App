@@ -1,5 +1,5 @@
 import React from "react";
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { TaskDB, TagDB, Operations, Identified } from "./interfaces/db";
 
@@ -18,6 +18,7 @@ import { fetchAllDB } from "./modules/db/initialLoad";
 import { useDispatchHistory } from "./custom-hooks";
 import { taskReducer } from "./features/reducers/taskReducer";
 import { tagReducer } from "./features/reducers/tagReducer";
+import { EditedTask } from "./interfaces/task";
 
 export function mappingComponent<T extends Identified, S>(
   arr: Array<T>,
@@ -63,47 +64,30 @@ function App() {
   }, []);
 
   /* 할일 사이드 메뉴에서 보기 */
-  const showToSide = useCallback((taskID: string) => {
+  const showToSide = (taskID: string) => {
     setSide({ status: true, id: taskID });
-  }, []);
+  };
   const sideContent = { ...side, ...taskArr.filter((task) => task.id === side.id)[0] };
 
   /* 1. 새 할일 추가 */
-  const addTask = useCallback((task: Pick<TaskDB, "title" | "dueDate">) => {
+  const addTask = (task: Pick<TaskDB, "title" | "dueDate">) => {
     const { title, dueDate } = task;
     taskDispatch({ type: "ADD", payload: { title, dueDate } });
-  }, []);
+  };
 
   /* 3. 할일 삭제 */
-  const deleteTask = useCallback(
-    (id: string) => {
-      taskDispatch({ type: "DELETE", payload: { id } });
-    },
-    [taskArr]
-  );
+  const deleteTask = (id: string) => {
+    taskDispatch({ type: "DELETE", payload: { id } });
+  };
 
-  const onEditTask = (id: string, { field, newValue }: { field: string; newValue: any }) => {
+  const onEditTask = (id: string, { field, newValue }: EditedTask) => {
     taskDispatch({ type: "EDIT", payload: { id, field, newValue } });
   };
 
-  const addTags = useCallback((newTag: string) => {
+  const addTags = (newTag: string) => {
     // [{tagText: "태그1", id: "태그1", assignedTask: []}, { ... }, ...]
     const id = newTag;
     tagDispatch({ type: "ADD", payload: { id, newTag } });
-  }, []);
-
-  const deleteTag = (id: string) => {
-    tagDispatch({ type: "DELETE", payload: { id } });
-  };
-
-  /* 사이드 패널에서 태그 추가 */
-  const selectTaskTag = (taskID: string, id: string) => {
-    tagDispatch({ type: "ADD_TASK_TAG", payload: { taskID, id } });
-  };
-
-  /* 사이드 패널에서 태그 삭제 */
-  const deleteTaskTag = async (taskID: string, id: string) => {
-    tagDispatch({ type: "DELETE_TASK_TAG", payload: { taskID, id } });
   };
 
   /* DB 업데이트 */
@@ -139,9 +123,8 @@ function App() {
 
   const sideCallbacks = {
     onClick: setSide,
-    onSelectTag: selectTaskTag,
-    onEditTask,
-    onDeleteTag: deleteTaskTag,
+    taskDispatch,
+    tagDispatch,
   };
 
   const data = filtered.isOn
@@ -165,7 +148,7 @@ function App() {
             tagArr={tagArr}
             isLoading={isLoading}
             setFilteredTask={setFiltered}
-            deleteTag={deleteTag}
+            tagDispatch={tagDispatch}
           />
         </AddNewTags>
         <SectionPanel />
