@@ -14,3 +14,7 @@ export interface sideCallbacks {
   onEditTask: (taskID: string, { field, newValue }: EditedTask) => void,
   onDeleteTag: (taskID: string, tagID: string) => void,
 };
+
+export interface TagCallback {
+  onDeleteTag: (tagText: string) => void;
+}

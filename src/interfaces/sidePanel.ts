@@ -3,10 +3,9 @@ import { TaskDB, TagDB } from "./db";
 import { EditedTask } from "./task";
 
 interface Callbacks {
-  onClick: (arg: { status: boolean; id: string }) => void;
-  onSelectTag: (taskID: string, tagID: string) => void;
-  onEditTask: (taskID: string, { field, newValue }: EditedTask) => void;
-  onDeleteTag: (taskID: string, tagID: string) => void;
+  onClick: (actions: { status: boolean; id: string }) => void;
+  taskDispatch: (actions: { type: string; payload: any }) => void;
+  tagDispatch: (actions: { type: string; payload: any }) => void;
 }
 
 export interface SidePanel extends TaskDB {
