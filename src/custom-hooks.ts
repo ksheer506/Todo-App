@@ -69,46 +69,35 @@ export function useDispatchHistory<T extends Array<Identified>>(
   return [data, mDipspatch, history] as const;
 }
 
-export function useLocalStorage(
-  key: string,
-  initialValue = ""
-): [string, (x: string) => void] {
-  const [data, setData] = useState<string>(initialValue);
+ export function useLocalStorage<T>(key: string, initialValue: T): [T, (x: T) => void] {
+   const [data, setData] = useState<T>(() => {
+     const storageData = JSON.parse(localStorage.getItem(key) || "");
 
-  const setLocalStorage = (value: string) => {
-    if (value) {
-      localStorage.setItem(key, value);
-      setData(value);
-    }
-  };
+     return storageData || initialValue;
+   });
 
-  useEffect(() => {
-    const storageData = localStorage.getItem(key);
+   const setLocalStorage = (value: T) => {
+     if (value) {
+       localStorage.setItem(key, JSON.stringify(value));
+       setData(value);
+     }
+   };
 
-    if (!storageData) {
-      localStorage.setItem(key, initialValue);
-
-      return;
-    }
-    setData(storageData);
-  }, []);
-
-  return [data, setLocalStorage];
-}
+   return [data, setLocalStorage];
+ }
 
 export function useDarkMode(): [boolean, () => void] {
-  const [mode, setMode] = useLocalStorage("darkMode", "false");
-  const modeBoolean = JSON.parse(mode);
+  const [mode, setMode] = useLocalStorage("darkMode", false);
 
   const setDarkMode = () => {
-    setMode(`${!modeBoolean}`);
+    setMode(!mode);
   };
 
   useEffect(() => {
     if (mode) {
-      document.documentElement.setAttribute("dark-theme", mode);
+      document.documentElement.setAttribute("dark-theme", `${mode}`);
     }
   }, [mode]);
 
-  return [modeBoolean, setDarkMode];
+  return [mode, setDarkMode];
 }
