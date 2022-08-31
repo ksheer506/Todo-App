@@ -69,9 +69,9 @@ export function useDispatchHistory<T extends Array<Identified>>(
   return [data, mDipspatch, history] as const;
 }
 
- export function useLocalStorage<T>(key: string, initialValue: T): [T, (x: T) => void] {
+ export function useLocalStorage<T>(key: string, initialValue?: T): [T, (x: T) => void] {
    const [data, setData] = useState<T>(() => {
-     const storageData = JSON.parse(localStorage.getItem(key) || "");
+     const storageData = JSON.parse(localStorage.getItem(key) || '""');
 
      return storageData || initialValue;
    });
